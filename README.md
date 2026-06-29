@@ -2,18 +2,6 @@
 
 A comprehensive, government-ready full-stack web application for Kenya agricultural decision-making.
 
-## ✨ What's New in v2.0
-
-| Feature | v1 | v2 |
-|---------|----|----|
-| Crops | 6 basic | **30+ with specific varieties** |
-| Livestock | 5 types | **14 species with specific breeds** |
-| Location | County only | **County → Constituency → Ward → Village** |
-| Climate Analysis | ❌ | **✅ Agro-Ecological Zone matching** |
-| AI Advisor | Claude (paid) | **FREE (Gemini Flash / Groq Llama)** |
-| Admin Delete | ❌ | **✅ Delete crops, animals, diseases** |
-| Varieties | None | **Maize: 6 varieties, Coffee: 5, Potato: 6...** |
-
 ## 🗂 Features
 
 - 🌍 **Climate & Location Advisor** — County → Constituency → Ward drill-down with AEZ analysis
