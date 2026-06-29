@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()  # Must be first before any other imports
+load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,10 +9,31 @@ from routers import auth, crops, livestock, diseases, ai_advisor, dashboard, cli
 
 Base.metadata.create_all(bind=engine)
 
+# Auto-seed on startup
+def auto_seed():
+    try:
+        from models.database import SessionLocal, User
+        db = SessionLocal()
+        if db.query(User).count() == 0:
+            print("🌱 Auto-seeding database...")
+            import subprocess, sys
+            subprocess.run([sys.executable, "seed.py"], check=True)
+            print("✅ Database seeded!")
+        db.close()
+    except Exception as e:
+        print(f"Seed error: {e}")
+
+auto_seed()
+
 app = FastAPI(title="AgriDSS API v2", version="2.0.0")
 
 app.add_middleware(CORSMiddleware,
-    allow_origins=["http://localhost:5173","http://localhost:3000","https://*.vercel.app"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://*.vercel.app",
+        os.getenv("FRONTEND_URL", ""),
+    ],
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(auth.router,        prefix="/api/auth",      tags=["Authentication"])
@@ -25,4 +46,4 @@ app.include_router(climate.router,     prefix="/api/location",  tags=["Location 
 
 @app.get("/")
 def root():
-    return {"message": "AgriDSS API v2 running"}
+    return {"message": "AgriDSS API v2 running ✅"}
