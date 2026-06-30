@@ -84,13 +84,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AgriDSS API v2", version="2.0.0", lifespan=lifespan)
 
+# Dynamic CORS origins
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://agridss.vercel.app",
+    os.getenv("FRONTEND_URL", ""),
+]
+
 app.add_middleware(CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://*.vercel.app",
-        os.getenv("FRONTEND_URL", ""),
-    ],
+    allow_origins=[o for o in origins if o],  # Filter out empty strings
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
