@@ -5,14 +5,16 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from models.database import Base, engine
 from routers import auth, crops, livestock, diseases, ai_advisor, dashboard, climate
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
 
-# Force seed database
-def run_seed():
+# Startup event to seed database
+async def startup_seed():
+    """Run seed on app startup"""
     try:
         from models.database import SessionLocal, User
         from models.auth import hash_password
@@ -72,9 +74,15 @@ def run_seed():
         import traceback
         traceback.print_exc()
 
-run_seed()
+# Lifespan context manager for startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await startup_seed()
+    yield
+    # Shutdown (if needed)
 
-app = FastAPI(title="AgriDSS API v2", version="2.0.0")
+app = FastAPI(title="AgriDSS API v2", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(CORSMiddleware,
     allow_origins=[
