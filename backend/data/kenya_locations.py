@@ -378,7 +378,7 @@ KENYA_LOCATIONS = {
         "Narok East": {"wards":["Mosiro","Ildamat","Keekonyokie","Melili","Suswa"],"climate_zone":"LM5","altitude_m":1800,"rainfall_mm":600,"aez":"Semi-Arid Pastoralist","temp_range":"14-32°C","soil_types":["volcanic loam","red sandy","clay"],"dry_months":["Jun","Jul","Aug","Sep"]},
         "Narok West": {"wards":["Mau","Siana","Melelo","Loita","Iloodokilani","Olkiramatian"],"climate_zone":"UM3-LH3","altitude_m":2100,"rainfall_mm":900,"aez":"Upper Midland-Lower Highland Forest Zone","temp_range":"12-25°C","soil_types":["volcanic loam","clay loam"],"dry_months":["Jul","Aug"]},
     }},
-    "County_47_Placeholder": {"constituencies": {}},
+    
 }
 
 AEZ_DESCRIPTIONS = {
