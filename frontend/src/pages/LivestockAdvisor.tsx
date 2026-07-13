@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { Beef, ChevronDown, ChevronUp, Syringe, UtensilsCrossed, Home, Search, Trash2, Star } from 'lucide-react'
 import { useAuth } from '../lib/auth'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 interface Breed { name:string; origin:string; milk_production?:string; weight_kg?:string; eggs_year?:string; honey_kg_yr?:string; notes:string }
 interface Animal { id:number; name:string; category:string; purpose:string; breeds:Breed[]; suitable_aez:string[]; description:string; feeding_guide:string; housing_requirements:string; vaccination_schedule:{vaccine:string;timing:string;dose:string}[]; common_diseases:string[]; breeding_info:string; market_info:string; water_requirement:string; space_required:string }
@@ -46,6 +47,9 @@ export default function LivestockAdvisor() {
   }
 
   return (
+    <>
+      <PageBackdrop image={BACKDROPS.livestock} overlay="from-leaf-900/70 via-emerald-950/50 to-earth-900/75" />
+      
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-earth-800 flex items-center gap-2"><Beef className="w-6 h-6 text-earth-600"/> Livestock Advisor</h1>
@@ -231,5 +235,6 @@ export default function LivestockAdvisor() {
         </div>
       )}
     </div>
+    </>
   )
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { Leaf, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -20,7 +21,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-leaf-900 via-leaf-800 to-earth-800 flex items-center justify-center p-4">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+        <PageBackdrop image={BACKDROPS.auth} overlay="from-leaf-950/85 via-leaf-900/70 to-earth-900/85" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-xl mb-4">

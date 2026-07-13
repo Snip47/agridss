@@ -3,6 +3,7 @@ import api from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { Navigate } from 'react-router-dom'
 import { Settings, Sprout, Beef, Bug, Users, CheckCircle, AlertCircle, Trash2, Plus, X } from 'lucide-react'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 type Tab = 'crops'|'livestock'|'diseases'|'users'
 
@@ -132,6 +133,9 @@ export default function AdminPanel() {
     `${color} text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 flex items-center gap-2`
 
   return (
+    <>
+      <PageBackdrop image={BACKDROPS.admin} overlay="from-leaf-900/70 via-emerald-950/50 to-earth-900/75" />
+      
     <div>
       {toast && <Toast msg={toast.msg} type={toast.type}/>}
       <div className="mb-6">
@@ -301,5 +305,6 @@ export default function AdminPanel() {
         </div>
       </div>
     </div>
+    </>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import api from '../lib/api'
 import { Bot, Send, User, Leaf, Loader2, ExternalLink, Info } from 'lucide-react'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 interface Message { role:'user'|'assistant'; content:string }
 
@@ -72,6 +73,9 @@ export default function AIAdvisor() {
   const noKey = aiStatus && !aiStatus.gemini_configured && !aiStatus.groq_configured
 
   return (
+    <>
+      <PageBackdrop image={BACKDROPS.ai} overlay="from-leaf-900/70 via-emerald-950/50 to-earth-900/75" />
+      
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       <div className="mb-4 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -180,5 +184,6 @@ export default function AIAdvisor() {
         </button>
       </div>
     </div>
+    </>
   )
 }

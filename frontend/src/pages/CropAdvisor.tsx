@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { Sprout, Search, ChevronDown, ChevronUp, Droplets, Clock, Trash2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 interface Variety { name:string; type:string; maturity_days?:number; notes:string }
 interface Crop { id:number; name:string; category:string; subcategory:string; varieties:Variety[]; suitable_aez:string[]; rainfall_min_mm:number; rainfall_max_mm:number; altitude_min_m:number; altitude_max_m:number; water_requirement:string; soil_types:string[]; planting_months:string[]; maturity_days:number; description:string; care_tips:string; expected_yield:string; market_price_ksh:string; diseases:string[]; best_counties:string[] }
@@ -37,6 +38,9 @@ export default function CropAdvisor() {
   }
 
   return (
+    <>
+      <PageBackdrop image={BACKDROPS.crops} overlay="from-leaf-900/70 via-emerald-950/50 to-earth-900/75" />
+      
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-earth-800 flex items-center gap-2"><Sprout className="w-6 h-6 text-leaf-600"/> Crop Advisor</h1>
@@ -188,5 +192,6 @@ export default function CropAdvisor() {
         </div>
       )}
     </div>
+    </>
   )
 }

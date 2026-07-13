@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { Bug, Search, AlertTriangle, ShieldCheck, Stethoscope, Trash2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 interface Disease { id:number; name:string; type:string; affects:string; symptoms:string; causes:string; treatment:string; prevention:string; severity:string }
 
@@ -42,6 +43,9 @@ export default function DiseaseDiagnosis() {
   }
 
   return (
+    <>
+      <PageBackdrop image={BACKDROPS.diseases} overlay="from-leaf-900/70 via-emerald-950/50 to-earth-900/75" />
+      
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-earth-800 flex items-center gap-2"><Bug className="w-6 h-6 text-red-500"/> Disease Diagnosis</h1>
@@ -151,5 +155,6 @@ export default function DiseaseDiagnosis() {
         </div>
       </div>
     </div>
+    </>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { MapPin, Thermometer, Droplets, Mountain, Sprout, Beef, Loader2, ArrowRight, Sun } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 interface ClimateData {
   county:string; constituency:string; climate_zone:string; aez_name:string; aez_description:string;
@@ -48,6 +49,9 @@ export default function ClimateAdvisor() {
   const selCls = "border border-earth-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-leaf-500 bg-white"
 
   return (
+    <>
+      <PageBackdrop image={BACKDROPS.climate} overlay="from-leaf-900/70 via-emerald-950/50 to-earth-900/75" />
+      
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-earth-800 flex items-center gap-2"><MapPin className="w-6 h-6 text-sky-600"/> Climate & Location Advisor</h1>
@@ -212,5 +216,6 @@ export default function ClimateAdvisor() {
         </div>
       )}
     </div>
+    </>
   )
 }

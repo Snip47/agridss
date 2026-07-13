@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { Leaf, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import api from '../lib/api'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 export default function Register() {
   const [form, setForm] = useState({ name:'', email:'', password:'', county:'', constituency:'', ward:'', village:'', farm_size_acres:'' })
@@ -45,7 +46,8 @@ export default function Register() {
   const labelCls = "block text-xs font-semibold text-earth-700 mb-1"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-leaf-900 via-leaf-800 to-earth-800 flex items-center justify-center p-4 py-8">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+        <PageBackdrop image={BACKDROPS.auth} overlay="from-leaf-950/85 via-leaf-900/70 to-earth-900/85" />
       <div className="w-full max-w-lg">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-xl mb-3">

@@ -18,7 +18,8 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 bg-leaf-800 flex flex-col fixed h-full z-10 shadow-xl">
+      {/* Sidebar stays solid so nav is always readable over the themed backdrops */}
+      <aside className="w-64 bg-leaf-800/95 backdrop-blur-md flex flex-col fixed h-full z-20 shadow-2xl border-r border-leaf-900/40">
         <div className="px-5 py-4 border-b border-leaf-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-leaf-500 rounded-xl flex items-center justify-center">
@@ -75,8 +76,9 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="ml-64 flex-1 min-h-screen bg-earth-50 overflow-x-hidden">
-        <div className="p-6 md:p-8 max-w-7xl">
+      {/* Main is transparent — PageBackdrop on each page fills the background */}
+      <main className="ml-64 flex-1 min-h-screen overflow-x-hidden relative">
+        <div className="p-6 md:p-8 max-w-7xl relative z-0">
           <Outlet/>
         </div>
       </main>

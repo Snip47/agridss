@@ -3,6 +3,7 @@ import { useAuth } from '../lib/auth'
 import api from '../lib/api'
 import { Sprout, Beef, Bug, Bot, Clock, MapPin, TrendingUp, Leaf, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import PageBackdrop, { BACKDROPS } from '../components/PageBackdrop'
 
 interface Stats { crops:number; animals:number; diseases:number; users:number; recent_activity:any[] }
 
@@ -28,6 +29,9 @@ export default function Dashboard() {
   ]
 
   return (
+    <>
+      <PageBackdrop image={BACKDROPS.dashboard} overlay="from-leaf-900/70 via-emerald-950/50 to-earth-900/75" />
+      
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-earth-800">Welcome back, {user?.name?.split(' ')[0]}! 👋</h1>
@@ -105,5 +109,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    </>
   )
 }
