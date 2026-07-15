@@ -1,81 +1,55 @@
-/**
- * Background Image URLs for AgriDSS Dashboards
- * Using FREE, high-quality images from Pexels, Pixabay, and Unsplash
- * All images are CC0 licensed (free to use)
- */
-
-export const backgroundImages = {
-  // Dashboard - General farm/agriculture theme
+export const BACKGROUNDS: Record<string, string[]> = {
   dashboard: [
-    'https://images.pexels.com/photos/2422296/pexels-photo-2422296.jpeg?auto=compress&cs=tinysrgb&w=1600', // Green fields
-    'https://images.pexels.com/photos/1084899/pexels-photo-1084899.jpeg?auto=compress&cs=tinysrgb&w=1600', // Sunrise over farm
+    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=85',
+    'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1920&q=85',
+    'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1920&q=85',
   ],
-
-  // Crop Advisor - Lush green crops, diverse varieties
   crops: [
-    'https://images.pexels.com/photos/3735857/pexels-photo-3735857.jpeg?auto=compress&cs=tinysrgb&w=1600', // Maize field
-    'https://images.pexels.com/photos/6585208/pexels-photo-6585208.jpeg?auto=compress&cs=tinysrgb&w=1600', // Vegetable garden
-    'https://images.pexels.com/photos/3958828/pexels-photo-3958828.jpeg?auto=compress&cs=tinysrgb&w=1600', // Wheat field
-    'https://images.pexels.com/photos/2143477/pexels-photo-2143477.jpeg?auto=compress&cs=tinysrgb&w=1600', // Green farm rows
+    'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&q=85',
+    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1920&q=85',
+    'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=1920&q=85',
+    'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1920&q=85',
   ],
-
-  // Livestock Advisor - Animals in pastoral settings, farm animals
   livestock: [
-    'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=1600', // Cattle grazing
-    'https://images.pexels.com/photos/3945671/pexels-photo-3945671.jpeg?auto=compress&cs=tinysrgb&w=1600', // Sheep in field
-    'https://images.pexels.com/photos/3807508/pexels-photo-3807508.jpeg?auto=compress&cs=tinysrgb&w=1600', // Goats grazing
-    'https://images.pexels.com/photos/2324045/pexels-photo-2324045.jpeg?auto=compress&cs=tinysrgb&w=1600', // Farm livestock
+    'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=1920&q=85',
+    'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=1920&q=85',
+    'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=1920&q=85',
+    'https://images.unsplash.com/photo-1549945676-891cd9e37de6?w=1920&q=85',
   ],
-
-  // Disease Diagnosis - Warning theme, pest/disease awareness
-  // Using controlled, educational imagery (not graphic)
   diseases: [
-    'https://images.pexels.com/photos/2828859/pexels-photo-2828859.jpeg?auto=compress&cs=tinysrgb&w=1600', // Damaged crops
-    'https://images.pexels.com/photos/1907963/pexels-photo-1907963.jpeg?auto=compress&cs=tinysrgb&w=1600', // Plant close-up
-    'https://images.pexels.com/photos/3719510/pexels-photo-3719510.jpeg?auto=compress&cs=tinysrgb&w=1600', // Agricultural concern
+    'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1920&q=85',
+    'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=1920&q=85',
+    'https://images.unsplash.com/photo-1444392061186-9fc38786c43e?w=1920&q=85',
   ],
-
-  // Climate & Location Advisor - Kenya landscapes, climate zones
   climate: [
-    'https://images.pexels.com/photos/1570473/pexels-photo-1570473.jpeg?auto=compress&cs=tinysrgb&w=1600', // Green hills (high rainfall zones)
-    'https://images.pexels.com/photos/1376355/pexels-photo-1376355.jpeg?auto=compress&cs=tinysrgb&w=1600', // Dry landscape (arid zones)
-    'https://images.pexels.com/photos/2296237/pexels-photo-2296237.jpeg?auto=compress&cs=tinysrgb&w=1600', // Landscape transition
-    'https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg?auto=compress&cs=tinysrgb&w=1600', // Valley/terrain
+    'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1920&q=85',
+    'https://images.unsplash.com/photo-1504608524841-42584120d693?w=1920&q=85',
+    'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1920&q=85',
   ],
-
-  // AI Advisor - Tech theme, futuristic
   ai: [
-    'https://images.pexels.com/photos/3888151/pexels-photo-3888151.jpeg?auto=compress&cs=tinysrgb&w=1600', // Tech background
-    'https://images.pexels.com/photos/577012/pexels-photo-577012.jpeg?auto=compress&cs=tinysrgb&w=1600', // Digital world
-    'https://images.pexels.com/photos/325111/pexels-photo-325111.jpeg?auto=compress&cs=tinysrgb&w=1600', // Innovation
+    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1920&q=85',
+    'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=1920&q=85',
   ],
-
-  // Admin Panel - Professional/industrial
   admin: [
-    'https://images.pexels.com/photos/3872357/pexels-photo-3872357.jpeg?auto=compress&cs=tinysrgb&w=1600', // Dashboard/analytics
-    'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1600', // Team working
+    'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1920&q=85',
   ],
-};
-
-/**
- * Get a random background image for a given page
- * @param page - The page identifier (dashboard, crops, livestock, etc.)
- * @returns A background image URL
- */
-export function getBackgroundImage(page: keyof typeof backgroundImages): string {
-  const images = backgroundImages[page];
-  if (!images || images.length === 0) {
-    // Fallback to dashboard
-    return backgroundImages.dashboard[0];
-  }
-  return images[Math.floor(Math.random() * images.length)];
+  login: [
+    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=85',
+    'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=1920&q=85',
+  ],
 }
 
-/**
- * Get all background images for a page
- * @param page - The page identifier
- * @returns Array of background image URLs
- */
-export function getAllBackgroundImages(page: keyof typeof backgroundImages): string[] {
-  return backgroundImages[page] || backgroundImages.dashboard;
+export const PAGE_BG_MAP: Record<string, string> = {
+  '/': 'dashboard',
+  '/crops': 'crops',
+  '/livestock': 'livestock',
+  '/diseases': 'diseases',
+  '/climate': 'climate',
+  '/ai': 'ai',
+  '/admin': 'admin',
+}
+
+export function getBackground(page: string): string {
+  const imgs = BACKGROUNDS[page] || BACKGROUNDS.dashboard
+  return imgs[Math.floor(Math.random() * imgs.length)]
 }
