@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { Bug, Search, AlertTriangle, ShieldCheck, Stethoscope, Trash2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
+import { getDiseaseImage } from '../lib/itemImages'
 
 interface Disease { id:number; name:string; type:string; affects:string; symptoms:string; causes:string; treatment:string; prevention:string; severity:string }
 
@@ -37,7 +38,7 @@ export default function DiseaseDiagnosis() {
   useEffect(() => { search() }, [type])
 
   const deleteDisease = async (id:number) => {
-    if (!confirm('Delete this disease entry?')) return
+    if (!confirm('Delete this disease?')) return
     setDeleting(id)
     await api.delete(`/diseases/${id}`)
     setDiseases(d=>d.filter(x=>x.id!==id))
@@ -51,9 +52,10 @@ export default function DiseaseDiagnosis() {
         <h1 className="text-4xl font-black text-white flex items-center gap-3 drop-shadow-2xl">
           <Bug className="w-9 h-9 text-red-400"/> Disease Diagnosis
         </h1>
-        <p className="text-white/55 mt-2">Describe symptoms or search by disease name. Covers crops and livestock.</p>
+        <p className="text-white/55 mt-2">Describe symptoms or search by name. Covers crop and livestock diseases.</p>
       </div>
 
+      {/* Search bar */}
       <G className="p-4 mb-5">
         <div className="flex gap-3 flex-wrap">
           <div className="flex-1 min-w-48 relative">
@@ -66,13 +68,15 @@ export default function DiseaseDiagnosis() {
           <div className="flex gap-2">
             {[['','All'],['crop','🌱 Crop'],['livestock','🐄 Livestock']].map(([val,label])=>(
               <button key={val} onClick={()=>setType(val)}
-                className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-                style={type===val?{background:'rgba(239,68,68,0.6)',color:'white',border:'1px solid rgba(239,68,68,0.7)'}:{background:'rgba(255,255,255,0.07)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.12)'}}>
+                className="px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                style={type===val
+                  ?{background:'rgba(239,68,68,0.6)',color:'white',border:'1px solid rgba(239,68,68,0.5)'}
+                  :{background:'rgba(255,255,255,0.07)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.12)'}}>
                 {label}
               </button>
             ))}
           </div>
-          <button onClick={search} className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all"
+          <button onClick={search} className="px-4 py-2 rounded-xl text-sm font-bold text-white"
             style={{ background:'rgba(239,68,68,0.7)', border:'1px solid rgba(239,68,68,0.5)' }}>
             Search
           </button>
@@ -80,68 +84,96 @@ export default function DiseaseDiagnosis() {
       </G>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        {/* List */}
+        {/* Disease list with images */}
         <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto scrollbar-thin pr-1">
           {loading && <div className="text-center py-8 text-white/40 text-sm">Searching...</div>}
-          {!loading && diseases.length===0 && <G className="py-8 text-center text-white/40 text-sm">No diseases found.</G>}
+          {!loading && diseases.length===0 && (
+            <G className="py-8 text-center text-white/40 text-sm">No diseases found.</G>
+          )}
           {diseases.map(d=>{
             const s = SEV[d.severity]||SEV.low
+            const img = getDiseaseImage(d.name)
             return (
               <div key={d.id} onClick={()=>setSelected(d)}
-                className="p-4 rounded-xl cursor-pointer transition-all duration-200"
+                className="rounded-xl cursor-pointer transition-all duration-200 overflow-hidden"
                 style={selected?.id===d.id
-                  ? { background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.35)', backdropFilter:'blur(16px)' }
-                  : { background:'rgba(0,0,0,0.32)', border:'1px solid rgba(255,255,255,0.09)', backdropFilter:'blur(16px)' }}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-bold text-white text-sm">{d.name}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
-                        style={{ background:s.bg, color:s.text, border:`1px solid ${s.border}` }}>{d.severity}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs px-2 py-0.5 rounded-full"
-                        style={d.type==='crop'?{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'1px solid rgba(34,197,94,0.25)'}:{background:'rgba(251,191,36,0.15)',color:'#fbbf24',border:'1px solid rgba(251,191,36,0.25)'}}>
-                        {d.type}
-                      </span>
-                      <span className="text-xs text-white/40">{d.affects}</span>
-                    </div>
-                    <p className="text-xs text-white/45 line-clamp-2">{d.symptoms}</p>
+                  ?{ background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.4)', backdropFilter:'blur(16px)' }
+                  :{ background:'rgba(0,0,0,0.32)', border:'1px solid rgba(255,255,255,0.09)', backdropFilter:'blur(16px)' }}>
+
+                {/* Disease image banner */}
+                <div className="h-20 overflow-hidden relative">
+                  <img src={img} alt={d.name} className="w-full h-full object-cover"
+                    onError={e=>{(e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80'}}/>
+                  <div className="absolute inset-0" style={{ background:'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 100%)' }}/>
+                  {/* Severity badge on image */}
+                  <div className="absolute top-2 right-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold capitalize"
+                      style={{ background:s.bg, color:s.text, border:`1px solid ${s.border}` }}>
+                      {d.severity}
+                    </span>
                   </div>
-                  {user?.role==='admin' && (
-                    <button onClick={e=>{e.stopPropagation();deleteDisease(d.id)}} disabled={deleting===d.id}
-                      className="p-1 text-red-400 hover:text-red-300 rounded flex-shrink-0">
-                      <Trash2 className="w-3.5 h-3.5"/>
-                    </button>
-                  )}
+                  {/* Type badge */}
+                  <div className="absolute top-2 left-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                      style={d.type==='crop'
+                        ?{background:'rgba(34,197,94,0.7)',color:'white'}
+                        :{background:'rgba(251,191,36,0.7)',color:'#000'}}>
+                      {d.type==='crop'?'🌱 Crop':'🐄 Livestock'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-white text-sm">{d.name}</div>
+                      <div className="text-xs text-white/40 mb-1">Affects: {d.affects}</div>
+                      <p className="text-xs text-white/50 line-clamp-2">{d.symptoms}</p>
+                    </div>
+                    {user?.role==='admin' && (
+                      <button onClick={e=>{e.stopPropagation();deleteDisease(d.id)}} disabled={deleting===d.id}
+                        className="p-1 text-red-400 hover:text-red-300 rounded flex-shrink-0">
+                        <Trash2 className="w-3.5 h-3.5"/>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )
           })}
         </div>
 
-        {/* Detail */}
+        {/* Detail panel */}
         <div className="lg:col-span-3">
           {selected ? (
-            <G className="p-6 sticky top-6">
-              <div className="flex items-start justify-between mb-4 gap-3">
-                <div>
-                  <h2 className="font-black text-white text-xl">{selected.name}</h2>
+            <G className="overflow-hidden sticky top-6">
+              {/* Hero image */}
+              <div className="h-48 relative overflow-hidden">
+                <img
+                  src={getDiseaseImage(selected.name)}
+                  alt={selected.name}
+                  className="w-full h-full object-cover"
+                  onError={e=>{(e.target as HTMLImageElement).src='https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80'}}
+                />
+                <div className="absolute inset-0" style={{ background:'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)' }}/>
+                <div className="absolute bottom-4 left-5 right-5">
+                  <h2 className="font-black text-white text-2xl drop-shadow-lg">{selected.name}</h2>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs px-2 py-0.5 rounded-full"
-                      style={selected.type==='crop'?{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'1px solid rgba(34,197,94,0.25)'}:{background:'rgba(251,191,36,0.15)',color:'#fbbf24',border:'1px solid rgba(251,191,36,0.25)'}}>
-                      {selected.type}
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                      style={selected.type==='crop'?{background:'rgba(34,197,94,0.7)',color:'white'}:{background:'rgba(251,191,36,0.7)',color:'#000'}}>
+                      {selected.type==='crop'?'🌱 Crop Disease':'🐄 Livestock Disease'}
                     </span>
-                    <span className="text-xs text-white/45">Affects: <strong className="text-white/70">{selected.affects}</strong></span>
+                    <span className="text-xs text-white/60">Affects: <strong className="text-white/80">{selected.affects}</strong></span>
+                    <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-bold capitalize"
+                      style={{ background:(SEV[selected.severity]||SEV.low).bg, color:(SEV[selected.severity]||SEV.low).text, border:`1px solid ${(SEV[selected.severity]||SEV.low).border}` }}>
+                      {selected.severity} severity
+                    </span>
                   </div>
                 </div>
-                <span className="text-xs px-3 py-1.5 rounded-full font-bold capitalize flex-shrink-0"
-                  style={{ background:(SEV[selected.severity]||SEV.low).bg, color:(SEV[selected.severity]||SEV.low).text, border:`1px solid ${(SEV[selected.severity]||SEV.low).border}` }}>
-                  {selected.severity} severity
-                </span>
               </div>
 
-              <div className="space-y-3">
+              {/* Detail sections */}
+              <div className="p-5 space-y-3">
                 {[
                   { icon:Stethoscope, label:'Symptoms', content:selected.symptoms, bg:'rgba(249,115,22,0.12)', border:'rgba(249,115,22,0.25)', color:'#fb923c' },
                   { icon:Bug, label:'Causes', content:selected.causes, bg:'rgba(239,68,68,0.12)', border:'rgba(239,68,68,0.25)', color:'#f87171' },
@@ -158,10 +190,10 @@ export default function DiseaseDiagnosis() {
               </div>
             </G>
           ) : (
-            <G className="py-20 text-center">
-              <Bug className="w-16 h-16 mx-auto mb-4 text-white/15"/>
-              <h3 className="font-bold text-white/40 mb-1">Select a Disease</h3>
-              <p className="text-sm text-white/25">Click any disease to see full diagnosis details.</p>
+            <G className="py-24 text-center">
+              <Bug className="w-20 h-20 mx-auto mb-4 text-white/10"/>
+              <h3 className="font-bold text-white/35 text-lg mb-1">Select a Disease</h3>
+              <p className="text-sm text-white/25 max-w-xs mx-auto">Click any disease card in the list to see full diagnosis, treatment and prevention details.</p>
             </G>
           )}
         </div>
