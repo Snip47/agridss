@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-
 _env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
 load_dotenv(_env_path, override=True)
 
@@ -11,16 +10,10 @@ from datetime import datetime
 import enum
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agridss.db")
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
+if DATABASE_URL.startswith("postgres://"): DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 print(f"🔌 Database: {DATABASE_URL[:60]}...")
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
-    pool_pre_ping=True
-)
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -45,6 +38,7 @@ class User(Base):
     ward = Column(String)
     village = Column(String)
     farm_size_acres = Column(String)
+    profile_picture = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     logs = relationship("ActivityLog", back_populates="user")
 
