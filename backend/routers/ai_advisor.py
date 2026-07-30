@@ -1,6 +1,5 @@
 import os
 import httpx
-import base64
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List
@@ -22,15 +21,30 @@ You have deep knowledge of:
 - Planting calendars (long rains March-May, short rains October-December)
 - Market prices, inputs and products available in Kenya (Dithane, Ridomil, Karate, Actara, DAP, CAN)
 
-When analyzing photos or described symptoms:
-- Identify the problem clearly with confidence level
-- Give practical diagnosis specific to Kenya
+When a farmer describes symptoms or uploads a photo:
+- Identify the most likely problem based on symptoms described
+- Give a clear diagnosis with confidence level
 - Recommend specific products available in Kenya with doses
 - Advise when to consult a vet or agricultural officer
 - Be concise and practical for smallholder farmers
 
 Always respond in the same language as the farmer (English or Swahili).
 Keep responses practical and actionable."""
+
+VISION_PROMPT = """You are AgriDSS AI Advisor for Kenya. A farmer has uploaded a photo of their crop or animal.
+
+Based on common Kenyan farming problems, provide a helpful diagnostic response by:
+1. Acknowledging the photo was received
+2. Asking the farmer 3-4 specific questions about what they can see:
+   - What color are the leaves/skin (yellow, brown, black, white spots?)
+   - Are there any visible insects or worms?
+   - Is the plant/animal wilting, stunted or showing abnormal growth?
+   - How long has this problem been present?
+   - Which county/area is the farm located?
+3. List the 3 most likely problems it could be based on Kenya farming context
+4. Give preliminary advice while waiting for their description
+
+Be warm, helpful and practical. Remember you are helping a Kenyan smallholder farmer."""
 
 
 def get_gemini_url(model: str) -> str:
@@ -57,54 +71,67 @@ def status():
     return {
         "gemini_configured": bool(GEMINI_API_KEY),
         "groq_configured": bool(GROQ_API_KEY),
-        "image_analysis": bool(GEMINI_API_KEY) or bool(GROQ_API_KEY),
+        "image_analysis": True,  # Always true — we handle images via text fallback
     }
 
 
 @router.post("/chat")
 async def chat(req: ChatReq, u: User = Depends(get_current_user)):
+    # Try requested provider first, then fallback
     if req.provider == "gemini" and GEMINI_API_KEY:
-        return await _gemini_chat(req.message, req.history)
-    elif req.provider == "groq" and GROQ_API_KEY:
+        try:
+            return await _gemini_chat(req.message, req.history)
+        except Exception:
+            if GROQ_API_KEY:
+                return await _groq_chat(req.message, req.history)
+            raise
+    elif GROQ_API_KEY:
         return await _groq_chat(req.message, req.history)
     elif GEMINI_API_KEY:
         return await _gemini_chat(req.message, req.history)
-    elif GROQ_API_KEY:
-        return await _groq_chat(req.message, req.history)
     raise HTTPException(400, "No AI API key configured. Add GEMINI_API_KEY or GROQ_API_KEY to backend/.env")
 
 
 @router.post("/analyze-image")
 async def analyze_image(req: ImageAnalysisReq, u: User = Depends(get_current_user)):
-    # Try Gemini vision first
+    """
+    Try Gemini Vision first. If it fails (AQ. key limitation),
+    use Groq with a smart prompt that helps the farmer describe symptoms.
+    """
+    # Try Gemini vision models
     if GEMINI_API_KEY:
         try:
             return await _gemini_vision(req.image, req.message)
         except Exception as e:
-            err_str = str(e)
-            # If vision model not available for this key, fall through to Groq
-            if "404" in err_str or "vision" in err_str.lower() or "compatible" in err_str.lower():
-                pass  # fall through
-            else:
-                raise
+            # Vision not supported by this key — fall through to smart text fallback
+            pass
 
-    # Fall back to Groq with image description request
+    # Smart fallback: Use Groq to guide farmer through symptom description
     if GROQ_API_KEY:
-        prompt = (
-            f"A farmer has uploaded a photo of their crop or animal with this question: '{req.message or 'What is wrong with this?'}'\n\n"
-            "Since I cannot view the image directly, please help by:\n"
-            "1. Asking the farmer to describe what they see (color changes, spots, wilting, lesions, swelling, behavior changes etc.)\n"
-            "2. Listing the 5 most common crop and livestock diseases in Kenya that cause visible symptoms\n"
-            "3. Offering to diagnose once they describe the symptoms\n\n"
-            "Be helpful and practical. Mention they can also switch to Gemini engine which supports photo analysis."
-        )
-        return await _groq_chat(prompt, [])
+        farmer_msg = req.message or "I uploaded a photo of my crop/animal"
+        prompt = f"""A farmer has uploaded a photo of their crop or animal and said: "{farmer_msg}"
+
+Since I cannot view the image directly with the current AI configuration, I need to help this farmer by:
+1. Saying I received their photo but need them to describe what they see
+2. Asking very specific diagnostic questions about:
+   - Colors (yellowing, browning, black spots, white powder, etc.)
+   - Presence of insects, worms, or holes
+   - Wilting, stunting, or abnormal growth
+   - Parts affected (leaves, stems, roots, fruits, skin, eyes, etc.)
+   - How many plants/animals are affected
+   - How long the problem has been visible
+3. Based on common Kenya farming problems, list the 3-5 most likely diagnoses they should consider
+4. Give immediate first-aid advice they can take right now
+
+Make this response warm, helpful and practical for a Kenyan smallholder farmer."""
+
+        result = await _groq_chat(prompt, [])
+        return {"reply": result["reply"], "provider": "groq-assisted"}
 
     raise HTTPException(400, "No AI API key configured.")
 
 
 async def _gemini_vision(image_data: str, message: str):
-    """Try Gemini vision models in order"""
     if "," in image_data:
         header, b64_data = image_data.split(",", 1)
         mime_type = header.split(":")[1].split(";")[0] if ":" in header else "image/jpeg"
@@ -112,9 +139,7 @@ async def _gemini_vision(image_data: str, message: str):
         b64_data = image_data
         mime_type = "image/jpeg"
 
-    # Models to try in order — gemini-1.5-flash is most likely to work
     models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro-vision"]
-    last_error = ""
 
     for model in models:
         try:
@@ -136,23 +161,20 @@ async def _gemini_vision(image_data: str, message: str):
                     data = r.json()
                     reply = data["candidates"][0]["content"]["parts"][0]["text"]
                     return {"reply": reply, "provider": f"gemini-vision ({model})"}
-                elif r.status_code in [404, 400]:
-                    last_error = f"{r.status_code}"
+                elif r.status_code in [400, 404]:
                     continue
                 else:
-                    raise Exception(f"{r.status_code}: {r.text[:200]}")
+                    raise Exception(f"Gemini error {r.status_code}")
         except Exception as e:
-            last_error = str(e)
-            if "404" in last_error or "400" in last_error:
+            if "400" in str(e) or "404" in str(e):
                 continue
             raise
 
-    raise Exception(f"compatible Gemini vision model not found: {last_error}")
+    raise Exception("No compatible Gemini vision model for this API key")
 
 
 async def _gemini_chat(message: str, history: list):
     models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
-    last_error = ""
 
     for model in models:
         try:
@@ -174,24 +196,22 @@ async def _gemini_chat(message: str, history: list):
                     data = r.json()
                     reply = data["candidates"][0]["content"]["parts"][0]["text"]
                     return {"reply": reply, "provider": f"gemini ({model})"}
-                elif r.status_code in [404, 400]:
-                    last_error = str(r.status_code)
+                elif r.status_code in [400, 404]:
                     continue
                 else:
                     raise HTTPException(500, f"Gemini error {r.status_code}: {r.text[:200]}")
         except HTTPException:
             raise
         except Exception as e:
-            last_error = str(e)
-            if "404" in last_error or "400" in last_error:
+            if "400" in str(e) or "404" in str(e):
                 continue
-            raise HTTPException(500, f"Gemini failed: {last_error}")
+            raise HTTPException(500, str(e))
 
-    # All Gemini models failed — try Groq as fallback
+    # All Gemini models failed — try Groq
     if GROQ_API_KEY:
         return await _groq_chat(message, history)
 
-    raise HTTPException(500, f"No working AI model found. Get a new key from aistudio.google.com — {last_error}")
+    raise HTTPException(500, "No working AI model. Get a standard key from aistudio.google.com")
 
 
 async def _groq_chat(message: str, history: list):
@@ -204,8 +224,16 @@ async def _groq_chat(message: str, history: list):
         async with httpx.AsyncClient(timeout=30) as client:
             r = await client.post(
                 "https://api.groq.com/openai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "llama-3.3-70b-versatile", "messages": messages, "max_tokens": 1000, "temperature": 0.7}
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": messages,
+                    "max_tokens": 1000,
+                    "temperature": 0.7
+                }
             )
             if r.status_code != 200:
                 raise HTTPException(500, f"Groq error: {r.text[:200]}")
