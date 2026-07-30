@@ -1,112 +1,68 @@
-# 🌾 AgriDSS Kenya v2.0 — Agricultural Decision Support System
+# AgriDSS Kenya
+### Agricultural Decision Support System
 
-A comprehensive, government-ready full-stack web application for Kenya agricultural decision-making.
+A professional web platform providing AI-powered farming intelligence for Kenyan farmers across all 47 counties.
 
-## 🗂 Features
+## Live URLs
+- **Frontend:** https://agridss.vercel.app
+- **Backend:** https://agridss-backend.onrender.com
 
-- 🌍 **Climate & Location Advisor** — County → Constituency → Ward drill-down with AEZ analysis
-- 🌱 **Crop Advisor** — 30+ crops with specific varieties, altitude ranges, planting calendars
-- 🐄 **Livestock Advisor** — 14 livestock with specific breeds (California White rabbit, Dorper sheep, etc.)
-- 🦠 **Disease Diagnosis** — 13+ diseases with detailed treatment and prevention
-- 🤖 **FREE AI Advisor** — Google Gemini Flash (free) or Groq Llama 3.3 (free)
-- 📊 **Dashboard** — Stats, quick actions, farmer location info
-- ⚙️ **Admin Panel** — Add/delete crops, livestock, diseases. View users.
-
-## 🚀 Setup (VS Code)
-
-### Backend
-
-```cmd
-cd agridss2\backend
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-```
-
-Edit `.env` — add your FREE AI key (see below).
-
-```cmd
-python seed.py
-uvicorn main:app --reload
-```
-
-### Frontend
-
-```cmd
-cd agridss2\frontend
-npm install
-copy .env.example .env
-npm run dev
-```
-
-Open: http://localhost:5173
-
-### Login Credentials
-
+## Login
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@agridss.co.ke | Admin@1234 |
 | Farmer | farmer@agridss.co.ke | Farmer@1234 |
 
----
+## Features
+- **60+ Crops** with varieties, planting calendars and market prices
+- **18 Livestock types** with breeds, feeding and vaccination schedules
+- **56 Diseases** — crop and livestock with treatment and prevention
+- **AI Farm Advisor** — Google Gemini and Groq with photo diagnosis
+- **47 Counties** — County → Constituency → Ward location drill-down
+- **Climate Analysis** — Rainfall, altitude, soil types and recommendations
+- **Photo Diagnosis** — Upload crop/animal photos for instant AI diagnosis
+- **Admin Panel** — Manage users, crops, livestock and diseases
 
-## 🤖 FREE AI API Keys
-
-### Option 1: Google Gemini Flash (Recommended)
-- **FREE:** 1,500 requests/day — No credit card needed
-- Get key: https://aistudio.google.com/apikey
-- Add to `.env`: `GEMINI_API_KEY=your_key_here`
-
-### Option 2: Groq (Llama 3.3 70B)
-- **FREE:** 14,400 requests/day — No credit card needed
-- Get key: https://console.groq.com
-- Add to `.env`: `GROQ_API_KEY=your_key_here`
-
-You can configure **both** for redundancy.
-
----
-
-## 🌍 Location Coverage
-
-Currently covers constituencies in:
-Nairobi, Machakos, Kiambu, Murang'a, Nakuru, Nyeri, Meru, Kisumu, Kericho, Uasin Gishu, Kajiado, Kilifi, Bungoma, Makueni, Trans Nzoia, Embu
-
-*Admin can expand by editing `backend/data/kenya_locations.py`*
-
-## 🌾 Agro-Ecological Zones Covered
-
-| Code | Name | Example Crops |
-|------|------|---------------|
-| LH2 | Lower Highland Humid | Tea, Coffee, Dairy |
-| LH3 | Lower Highland Semi-Humid | Coffee, Maize, Wheat |
-| UM2 | Upper Midland Moist | Coffee, Horticulture |
-| UM3 | Upper Midland Semi-Humid | Maize, Beans |
-| UM4 | Upper Midland Transitional | Sorghum, Sunflower |
-| LM2-5 | Lower Midland | Sugarcane → Arid Livestock |
-| CL3-4 | Coastal Lowland | Cassava, Coconut, Mango |
-
-## 🏛 Government Presentation Notes
-
-This system demonstrates:
-1. Kenya-specific AEZ classification (Jaetzold methodology)
-2. Real variety-level recommendations (not just crop-level)
-3. Specific breed recommendations for livestock
-4. Location precision to ward level
-5. Integrated climate × crop × livestock recommendations
-6. Free AI advisor accessible to all farmers
-7. Role-based access (admin vs farmer)
-8. Expandable knowledge base via admin panel
-
-## 📦 Deployment
-
-- **Backend:** Render.com — Set Python 3.12, add environment variables
-- **Frontend:** Vercel — Set `VITE_API_URL` to Render backend URL
-- **Database:** Supabase PostgreSQL (free tier) for production
-
-## 🔧 Tech Stack
-
-- **Backend:** FastAPI + SQLAlchemy + SQLite/PostgreSQL
+## Tech Stack
+- **Backend:** FastAPI + SQLAlchemy + PostgreSQL (Supabase)
 - **Frontend:** React + TypeScript + Vite + Tailwind CSS
-- **AI:** Google Gemini Flash (free) / Groq Llama 3.3 (free)
-- **Auth:** JWT + bcrypt
+- **AI:** Google Gemini Flash (with vision) + Groq Llama 3.3
+- **Deploy:** Render (backend) + Vercel (frontend)
+
+## Local Development
+
+### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+python seed.py
+uvicorn main:app --reload
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Environment Variables
+
+### backend/.env
+```
+DATABASE_URL=your_supabase_postgresql_url
+SECRET_KEY=your_secret_key
+GEMINI_API_KEY=your_free_gemini_key_from_aistudio.google.com
+GROQ_API_KEY=your_free_groq_key_from_console.groq.com
+```
+
+### frontend/.env
+```
+VITE_API_URL=https://agridss-backend.onrender.com/api
+```
+
+## Coverage
+- All 47 Kenya counties with constituency and ward data
+- Crops: cereals, legumes, vegetables, fruits, cash crops, flowers
+- Livestock: cattle, goats, sheep, poultry, rabbits, pigs, fish, bees, camels, donkeys, ducks, quail, ostriches
+- Diseases: all major Kenya crop and livestock diseases with treatment guides
