@@ -1,98 +1,83 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/auth'
 import api from '../lib/api'
-import { Sprout, Beef, Bug, Leaf, MapPin, ArrowRight } from 'lucide-react'
+import { Sprout, Beef, Bug, Leaf, ArrowRight, CloudSun, Bot } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 interface Stats { crops:number; animals:number; diseases:number; users:number }
-
-const G = ({ children, className='' }: { children:React.ReactNode; className?:string }) => (
-  <div className={className} style={{ background:'rgba(0,0,0,0.35)', backdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:'1rem' }}>{children}</div>
-)
 
 export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats|null>(null)
   useEffect(() => { api.get('/dashboard/stats').then(r=>setStats(r.data)).catch(()=>{}) }, [])
 
-  const cards = [
-    { label:'Crops', val:stats?.crops??'—', icon:Sprout, c:'rgba(34,197,94,0.18)', bc:'rgba(34,197,94,0.35)', tc:'#4ade80', to:'/crops' },
-    { label:'Livestock', val:stats?.animals??'—', icon:Beef, c:'rgba(251,191,36,0.18)', bc:'rgba(251,191,36,0.35)', tc:'#fbbf24', to:'/livestock' },
-    { label:'Diseases', val:stats?.diseases??'—', icon:Bug, c:'rgba(239,68,68,0.18)', bc:'rgba(239,68,68,0.35)', tc:'#f87171', to:'/diseases' },
-    { label:'Farmers', val:stats?.users??'—', icon:Leaf, c:'rgba(96,165,250,0.18)', bc:'rgba(96,165,250,0.35)', tc:'#60a5fa', to:'/' },
-  ]
-
-  const quickLinks = [
-    { label:'Climate & Location Analysis', to:'/climate', icon:'🌍' },
-    { label:'Crop Advisor', to:'/crops', icon:'🌱' },
-    { label:'Livestock Advisor', to:'/livestock', icon:'🐄' },
-    { label:'Disease Diagnosis', to:'/diseases', icon:'🦠' },
-    { label:'AI Farm Advisor', to:'/ai', icon:'🤖' },
-  ]
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
-    <div className="slide-up">
+    <div className="fade-in max-w-4xl">
+      {/* Greeting */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-white drop-shadow-2xl">Welcome, {user?.name?.split(' ')[0]}</h1>
-        <p className="text-white/45 mt-1 text-sm">AgriDSS Kenya — Agricultural Decision Support System</p>
+        <p className="text-sm font-medium mb-1" style={{ color:'var(--text-muted)' }}>{greeting} 👋</p>
+        <h1 className="text-3xl font-bold" style={{ fontFamily:'Lora, serif', color:'var(--text)' }}>
+          {user?.name?.split(' ')[0] || 'Farmer'}
+        </h1>
+        {user?.county && (
+          <p className="text-sm mt-1" style={{ color:'var(--text-muted)' }}>
+            📍 {user.county}{user.constituency ? `, ${user.constituency}` : ''}
+          </p>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {cards.map(({ label, val, icon:Icon, c, bc, tc, to }) => (
-          <Link key={label} to={to} className="rounded-2xl p-5 transition-all duration-200 hover:scale-105"
-            style={{ background:c, border:`1px solid ${bc}`, backdropFilter:'blur(16px)' }}>
-            <Icon className="w-6 h-6 mb-3" style={{ color:tc }}/>
-            <div className="text-4xl font-black text-white mb-1">{val}</div>
-            <div className="text-xs text-white/50 font-medium">{label}</div>
-          </Link>
+      {/* Stats row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        {[
+          { label:'Crops', val:stats?.crops??'—', icon:'🌱', color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0' },
+          { label:'Livestock', val:stats?.animals??'—', icon:'🐄', color:'#d97706', bg:'#fffbeb', border:'#fde68a' },
+          { label:'Diseases', val:stats?.diseases??'—', icon:'🦠', color:'#dc2626', bg:'#fef2f2', border:'#fecaca' },
+          { label:'Farmers', val:stats?.users??'—', icon:'👨‍🌾', color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
+        ].map(({ label, val, icon, color, bg, border }) => (
+          <div key={label} className="rounded-xl p-4" style={{ background:bg, border:`1px solid ${border}` }}>
+            <div className="text-2xl mb-1">{icon}</div>
+            <div className="text-2xl font-bold" style={{ color }}>{val}</div>
+            <div className="text-xs font-medium mt-0.5" style={{ color:'var(--text-muted)' }}>{label}</div>
+          </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <G className="lg:col-span-2 p-6">
-          <h2 className="font-bold text-white mb-4 text-sm">Quick Access</h2>
-          <div className="space-y-2">
-            {quickLinks.map(({ label, to, icon }) => (
-              <Link key={to} to={to}
-                className="flex items-center justify-between px-4 py-3 rounded-xl text-white text-sm font-medium transition-all duration-200"
-                style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.09)' }}
-                onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.12)')}
-                onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}>
-                <span>{icon} {label}</span>
-                <ArrowRight className="w-4 h-4 opacity-40"/>
-              </Link>
-            ))}
-          </div>
-        </G>
-
-        <G className="p-6">
-          {user?.county ? (
-            <>
-              <h2 className="font-bold text-white mb-4 text-sm flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-blue-400"/> Your Location
-              </h2>
-              <div className="space-y-2">
-                {[['County',user.county],['Constituency',(user as any).constituency],['Ward',(user as any).ward]].map(([label,val])=>
-                  val ? (
-                    <div key={label} className="px-3 py-2 rounded-xl" style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)' }}>
-                      <span className="text-xs text-white/40">{label} </span>
-                      <span className="text-sm font-bold text-white">{val}</span>
-                    </div>
-                  ) : null
-                )}
-                <Link to="/climate" className="flex items-center gap-1 text-xs text-blue-300 font-semibold hover:underline mt-2">
-                  View climate analysis <ArrowRight className="w-3 h-3"/>
-                </Link>
+      {/* Quick links */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold mb-3" style={{ fontFamily:'Lora, serif', color:'var(--text)' }}>
+          What do you need today?
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            { to:'/crops', icon:Sprout, emoji:'🌱', label:'Crop Advisor', desc:'Find the right crops for your land', color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0' },
+            { to:'/livestock', icon:Beef, emoji:'🐄', label:'Livestock Advisor', desc:'Breeds, feeding and market info', color:'#d97706', bg:'#fffbeb', border:'#fde68a' },
+            { to:'/diseases', icon:Bug, emoji:'🦠', label:'Disease Diagnosis', desc:'Identify and treat crop and animal diseases', color:'#dc2626', bg:'#fef2f2', border:'#fecaca' },
+            { to:'/climate', icon:CloudSun, emoji:'🌍', label:'Climate Analysis', desc:'Rainfall, altitude and soil for your area', color:'#0369a1', bg:'#f0f9ff', border:'#bae6fd' },
+            { to:'/ai', icon:Bot, emoji:'🤖', label:'AI Farm Advisor', desc:'Ask any farming question or upload a photo', color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
+          ].map(({ to, emoji, label, desc, color, bg, border }) => (
+            <Link key={to} to={to}
+              className="flex items-center gap-4 p-4 rounded-xl transition-all duration-150 group"
+              style={{ background:bg, border:`1px solid ${border}`, textDecoration:'none' }}
+              onMouseEnter={e=>(e.currentTarget.style.transform='translateY(-1px)')}
+              onMouseLeave={e=>(e.currentTarget.style.transform='translateY(0)')}>
+              <div className="text-3xl flex-shrink-0">{emoji}</div>
+              <div className="flex-1">
+                <div className="font-semibold text-sm" style={{ color }}>{label}</div>
+                <div className="text-xs mt-0.5" style={{ color:'var(--text-muted)' }}>{desc}</div>
               </div>
-            </>
-          ) : (
-            <div className="text-center py-6">
-              <div className="text-4xl mb-3">🇰🇪</div>
-              <div className="text-white/60 text-sm">47 Counties · All Kenya crops and livestock</div>
-            </div>
-          )}
-        </G>
+              <ArrowRight className="w-4 h-4 opacity-30 group-hover:opacity-60 transition-opacity flex-shrink-0" style={{ color }}/>
+            </Link>
+          ))}
+        </div>
       </div>
+
+      {/* Footer note */}
+      <p className="text-xs" style={{ color:'var(--text-muted)' }}>
+        🇰🇪 AgriDSS Kenya covers all 47 counties · {stats?.crops||60}+ crops · {stats?.animals||18} livestock types · {stats?.diseases||56} diseases
+      </p>
     </div>
   )
 }
