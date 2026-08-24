@@ -33,6 +33,7 @@ def seed():
         db.commit()
 
         from data.crops_db import get_all_crops
+        from data.image_urls import get_crop_image
         crops = get_all_crops()
         for c in crops:
             db.add(Crop(
@@ -53,10 +54,11 @@ def seed():
                 expected_yield=c.get("expected_yield",""),
                 market_price_ksh=c.get("market_price_ksh",""),
                 diseases=json.dumps(c.get("diseases",[])),
-                best_counties=json.dumps(c.get("best_counties",[]))
+                best_counties=json.dumps(c.get("best_counties",[])),
+                image_url=get_crop_image(c["name"])  # NEW: Add image URL
             ))
         db.commit()
-        print(f"  ✅ {db.query(Crop).count()} crops seeded")
+        print(f"  ✅ {db.query(Crop).count()} crops seeded with images")
 
         # ── FORCE clear and reseed livestock ──
         print("  🔄 Clearing old livestock...")
@@ -64,6 +66,7 @@ def seed():
         db.commit()
 
         from data.livestock_db import get_all_livestock
+        from data.image_urls import get_livestock_image
         animals = get_all_livestock()
         for a in animals:
             db.add(Animal(
@@ -79,10 +82,11 @@ def seed():
                 breeding_info=a.get("breeding_info",""),
                 market_info=a.get("market_info",""),
                 water_requirement=a.get("water_requirement",""),
-                space_required=a.get("space_required","")
+                space_required=a.get("space_required",""),
+                image_url=get_livestock_image(a["name"])  # NEW: Add image URL
             ))
         db.commit()
-        print(f"  ✅ {db.query(Animal).count()} livestock seeded")
+        print(f"  ✅ {db.query(Animal).count()} livestock seeded with images")
 
         # ── FORCE clear and reseed diseases ──
         print("  🔄 Clearing old diseases...")
