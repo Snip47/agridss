@@ -99,7 +99,7 @@ export default function Layout() {
         </div>
         <button onClick={doLogout}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
-          style={{ color:'var(--sidebar-muted)', hover:'background:rgba(255,255,255,0.1)' }}
+          style={{ color:'var(--sidebar-muted)' }}
           onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.1)')}
           onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
           <LogOut className="w-4 h-4"/>
