@@ -55,6 +55,7 @@ class Crop(Base):
     description = Column(Text); care_tips = Column(Text)
     expected_yield = Column(String); market_price_ksh = Column(String)
     diseases = Column(Text); best_counties = Column(Text)
+    image_url = Column(String, nullable=True)  # NEW: Store image URLs
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -69,6 +70,7 @@ class Animal(Base):
     common_diseases = Column(Text); breeding_info = Column(Text)
     market_info = Column(Text); water_requirement = Column(String)
     space_required = Column(String)
+    image_url = Column(String, nullable=True)  # NEW: Store image URLs
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
