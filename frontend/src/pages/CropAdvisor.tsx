@@ -2,21 +2,18 @@ import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { Search, Droplets, Clock, Trash2, X } from 'lucide-react'
 import { useAuth } from '../lib/auth'
+import { getCropImage } from '../lib/itemImages'
 
 interface Variety { name:string; type:string; maturity_days?:number; notes:string }
 interface Crop { id:number; name:string; category:string; subcategory:string; varieties:Variety[]; suitable_aez:string[]; rainfall_min_mm:number; rainfall_max_mm:number; altitude_min_m:number; altitude_max_m:number; water_requirement:string; soil_types:string[]; planting_months:string[]; maturity_days:number; description:string; care_tips:string; expected_yield:string; market_price_ksh:string; diseases:string[]; best_counties:string[] }
 
 const CATS = ['cereal','legume','vegetable','fruit','cash crop','flower']
 const CAT_EMOJI:Record<string,string> = { cereal:'🌾', legume:'🫘', vegetable:'🥬', fruit:'🍎', 'cash crop':'💰', flower:'🌸' }
-const CAT_COLOR:Record<string,string> = { cereal:'rgba(251,191,36,0.2)', legume:'rgba(34,197,94,0.2)', vegetable:'rgba(96,165,250,0.2)', fruit:'rgba(239,68,68,0.2)', 'cash crop':'rgba(168,85,247,0.2)', flower:'rgba(236,72,153,0.2)' }
-const WATER_TEXT:Record<string,string> = { low:'#fbbf24', moderate:'#60a5fa', high:'#22d3ee' }
+const WATER_TEXT:Record<string,string> = { low:'#d97706', moderate:'#2563eb', high:'#0891b2' }
+const FALLBACK = 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&q=80&fit=crop'
 
-const G = ({ children, className='' }: { children:React.ReactNode; className?:string }) => (
-  <div className={className} style={{ background:'rgba(0,0,0,0.38)', backdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:'1rem' }}>{children}</div>
-)
-
-const Badge = ({ children, color='rgba(255,255,255,0.1)', text='rgba(255,255,255,0.7)' }: any) => (
-  <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background:color, color:text }}>{children}</span>
+const Badge = ({ children, bg='#f3f4f6', text='#374151' }: any) => (
+  <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background:bg, color:text }}>{children}</span>
 )
 
 export default function CropAdvisor() {
@@ -26,6 +23,7 @@ export default function CropAdvisor() {
   const [selected, setSelected] = useState<Crop|null>(null)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState<number|null>(null)
+  const [imgErrors, setImgErrors] = useState<Record<number,boolean>>({})
 
   const fetchCrops = async () => {
     setLoading(true)
@@ -47,71 +45,87 @@ export default function CropAdvisor() {
     setDeleting(null)
   }
 
+  const handleImgError = (id:number, e:React.SyntheticEvent<HTMLImageElement>) => {
+    setImgErrors(prev=>({...prev,[id]:true}));
+    (e.target as HTMLImageElement).src = FALLBACK
+  }
+
   return (
-    <div className="slide-up">
-      <div className="mb-5">
-        <h1 className="text-3xl font-black text-white drop-shadow-2xl">🌱 Crop Advisor</h1>
-        <p className="text-white/45 mt-1 text-sm">{crops.length} crops — varieties, planting calendars, yields and market prices</p>
+    <div className="fade-in max-w-6xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-1" style={{ fontFamily:'Lora, serif', color:'var(--text)' }}>🌱 Crop Advisor</h1>
+        <p className="text-sm" style={{ color:'var(--text-muted)' }}>{crops.length} crops — varieties, planting calendars, yields and market prices</p>
       </div>
 
-      <G className="p-4 mb-5">
+      {/* Filters */}
+      <div className="p-4 rounded-xl mb-5" style={{ background:'white', border:'1px solid var(--border)' }}>
         <div className="flex flex-wrap gap-2 mb-3">
           <button onClick={()=>setFilters(f=>({...f,category:''}))}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-            style={!filters.category?{background:'rgba(34,197,94,0.7)',color:'white',border:'1px solid rgba(34,197,94,0.5)'}:{background:'rgba(255,255,255,0.07)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.12)'}}>
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={!filters.category?{background:'var(--green)',color:'white',border:'1px solid var(--green)'}:{background:'white',color:'var(--text-muted)',border:'1px solid var(--border)'}}>
             All
           </button>
           {CATS.map(c=>(
             <button key={c} onClick={()=>setFilters(f=>({...f,category:c}))}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all capitalize"
-              style={filters.category===c?{background:'rgba(34,197,94,0.7)',color:'white',border:'1px solid rgba(34,197,94,0.5)'}:{background:'rgba(255,255,255,0.07)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.12)'}}>
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize"
+              style={filters.category===c?{background:'var(--green)',color:'white',border:'1px solid var(--green)'}:{background:'white',color:'var(--text-muted)',border:'1px solid var(--border)'}}>
               {CAT_EMOJI[c]} {c}
             </button>
           ))}
         </div>
         <div className="flex gap-2">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/35"/>
+            <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color:'var(--text-muted)' }}/>
             <input placeholder="Search crops..." value={filters.search}
               onChange={e=>setFilters(f=>({...f,search:e.target.value}))}
               onKeyDown={e=>e.key==='Enter'&&fetchCrops()}
-              className="w-full pl-9 rounded-xl px-3 py-2 text-sm"
-              style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.18)', color:'white' }}/>
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg outline-none"
+              style={{ border:'1px solid var(--border)', background:'var(--bg)', color:'var(--text)' }}
+              onFocus={e=>(e.target.style.borderColor='#16a34a')}
+              onBlur={e=>(e.target.style.borderColor='var(--border)')}/>
           </div>
-          <button onClick={fetchCrops} className="px-4 py-2 rounded-xl text-sm font-bold text-white"
-            style={{ background:'rgba(34,197,94,0.7)', border:'1px solid rgba(34,197,94,0.5)' }}>Search</button>
+          <button onClick={fetchCrops} className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+            style={{ background:'var(--green)' }}>Search</button>
         </div>
-      </G>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-1 space-y-2 max-h-[75vh] overflow-y-auto scrollbar-thin pr-1">
-          {loading && <div className="text-center py-8 text-white/40">Loading...</div>}
-          {!loading && crops.length===0 && <G className="py-8 text-center text-white/40">No crops found.</G>}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        {/* List */}
+        <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+          {loading && <p className="text-center py-8 text-sm" style={{ color:'var(--text-muted)' }}>Loading...</p>}
+          {!loading && crops.length===0 && <div className="text-center py-8 text-sm" style={{ color:'var(--text-muted)' }}>No crops found.</div>}
           {crops.map(crop=>(
             <div key={crop.id} onClick={()=>setSelected(crop)}
-              className="rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02]"
-              style={selected?.id===crop.id
-                ?{border:'2px solid rgba(34,197,94,0.7)',backdropFilter:'blur(16px)',background:'rgba(34,197,94,0.1)'}
-                :{border:'1px solid rgba(255,255,255,0.1)',backdropFilter:'blur(16px)',background:'rgba(0,0,0,0.32)'}}>
+              className="rounded-xl cursor-pointer transition-all overflow-hidden"
+              style={selected?.id===crop.id?{border:'2px solid var(--green)',background:'#f0fdf4'}:{border:'1px solid var(--border)',background:'white'}}
+              onMouseEnter={e=>selected?.id!==crop.id&&(e.currentTarget.style.borderColor='#86efac')}
+              onMouseLeave={e=>selected?.id!==crop.id&&(e.currentTarget.style.borderColor='var(--border)')}>
               <div className="flex items-center gap-3 p-3">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                  style={{ background: CAT_COLOR[crop.category]||'rgba(255,255,255,0.1)' }}>
-                  {CAT_EMOJI[crop.category]||'🌿'}
+                {/* Real photo thumbnail */}
+                <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                  <img
+                    src={getCropImage(crop.name)}
+                    alt={crop.name}
+                    className="w-full h-full object-cover"
+                    onError={e=>handleImgError(crop.id, e)}
+                    loading="lazy"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-white text-sm">{crop.name}</div>
-                  <div className="text-xs text-white/45 capitalize">{crop.subcategory||crop.category}</div>
+                  <div className="font-semibold text-sm" style={{ color:'var(--text)' }}>{crop.name}</div>
+                  <div className="text-xs capitalize mt-0.5" style={{ color:'var(--text-muted)' }}>{crop.subcategory||crop.category}</div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs" style={{ color:WATER_TEXT[crop.water_requirement]||'white' }}>
+                    <span className="text-xs font-medium" style={{ color:WATER_TEXT[crop.water_requirement]||'#374151' }}>
                       <Droplets className="w-3 h-3 inline mr-0.5"/>{crop.water_requirement}
                     </span>
-                    <span className="text-xs text-white/35"><Clock className="w-3 h-3 inline mr-0.5"/>{crop.maturity_days}d</span>
+                    <span className="text-xs" style={{ color:'var(--text-muted)' }}>
+                      <Clock className="w-3 h-3 inline mr-0.5"/>{crop.maturity_days}d
+                    </span>
                   </div>
                 </div>
                 {user?.role==='admin' && (
                   <button onClick={e=>{e.stopPropagation();deleteCrop(crop.id)}} disabled={deleting===crop.id}
-                    className="p-1.5 rounded-lg text-red-400 hover:text-red-300 flex-shrink-0"
-                    style={{ background:'rgba(239,68,68,0.1)' }}>
+                    className="p-1.5 rounded-lg flex-shrink-0" style={{ color:'#dc2626', background:'#fef2f2' }}>
                     <Trash2 className="w-3.5 h-3.5"/>
                   </button>
                 )}
@@ -120,99 +134,99 @@ export default function CropAdvisor() {
           ))}
         </div>
 
-        <div className="lg:col-span-2">
+        {/* Detail */}
+        <div className="lg:col-span-3">
           {selected ? (
-            <G className="overflow-hidden">
-              {/* Header banner with emoji */}
-              <div className="relative p-8 flex items-center gap-5"
-                style={{ background: `linear-gradient(135deg, ${CAT_COLOR[selected.category]||'rgba(34,197,94,0.15)'}, rgba(0,0,0,0.3))`, borderBottom:'1px solid rgba(255,255,255,0.08)' }}>
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-5xl flex-shrink-0"
-                  style={{ background:'rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.15)' }}>
-                  {CAT_EMOJI[selected.category]||'🌿'}
-                </div>
-                <div className="flex-1">
-                  <h2 className="font-black text-white text-2xl">{selected.name}</h2>
+            <div className="rounded-xl overflow-hidden" style={{ border:'1px solid var(--border)', background:'white' }}>
+              {/* Hero photo */}
+              <div className="relative h-52 overflow-hidden">
+                <img
+                  src={getCropImage(selected.name)}
+                  alt={selected.name}
+                  className="w-full h-full object-cover"
+                  onError={e=>{ (e.target as HTMLImageElement).src = FALLBACK }}
+                />
+                <div className="absolute inset-0" style={{ background:'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)' }}/>
+                <button onClick={()=>setSelected(null)}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{ background:'rgba(255,255,255,0.9)' }}>
+                  <X className="w-4 h-4" style={{ color:'var(--text)' }}/>
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h2 className="font-bold text-white text-xl leading-tight">{selected.name}</h2>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <Badge color="rgba(34,197,94,0.3)" text="#4ade80">{selected.category}</Badge>
-                    {selected.subcategory && <span className="text-xs text-white/50">{selected.subcategory}</span>}
-                    <Badge color={`rgba(${WATER_TEXT[selected.water_requirement]==='#fbbf24'?'251,191,36':'96,165,250'},0.2)`} text={WATER_TEXT[selected.water_requirement]||'white'}>
-                      <Droplets className="w-3 h-3 inline mr-0.5"/>{selected.water_requirement} water
-                    </Badge>
-                    <span className="text-xs text-white/40"><Clock className="w-3 h-3 inline mr-0.5"/>{selected.maturity_days} days to harvest</span>
+                    <Badge bg="rgba(22,163,74,0.85)" text="white">{CAT_EMOJI[selected.category]} {selected.category}</Badge>
+                    {selected.subcategory && <span className="text-xs text-white/70">{selected.subcategory}</span>}
+                    <span className="text-xs text-white/70"><Clock className="w-3 h-3 inline mr-0.5"/>{selected.maturity_days} days</span>
                   </div>
                 </div>
-                <button onClick={()=>setSelected(null)}
-                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background:'rgba(0,0,0,0.4)' }}>
-                  <X className="w-4 h-4 text-white"/>
-                </button>
               </div>
 
-              <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto scrollbar-thin">
-                <p className="text-sm text-white/75 leading-relaxed">{selected.description}</p>
+              <div className="p-5 space-y-4 max-h-[55vh] overflow-y-auto">
+                <p className="text-sm leading-relaxed" style={{ color:'var(--text)' }}>{selected.description}</p>
 
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label:'Expected Yield', val:selected.expected_yield, icon:'📦' },
                     { label:'Market Price', val:selected.market_price_ksh, icon:'💰' },
-                    { label:'Rainfall Needed', val:`${selected.rainfall_min_mm}–${selected.rainfall_max_mm}mm/yr`, icon:'🌧️' },
-                    { label:'Altitude Range', val:`${selected.altitude_min_m}–${selected.altitude_max_m}m`, icon:'⛰️' },
-                  ].map(({ label, val, icon }) => val ? (
-                    <div key={label} className="p-3 rounded-xl" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)' }}>
-                      <div className="text-xs text-white/40 mb-0.5">{icon} {label}</div>
-                      <div className="text-sm font-bold text-white">{val}</div>
+                    { label:'Rainfall', val:`${selected.rainfall_min_mm}–${selected.rainfall_max_mm}mm/yr`, icon:'🌧️' },
+                    { label:'Altitude', val:`${selected.altitude_min_m}–${selected.altitude_max_m}m`, icon:'⛰️' },
+                  ].filter(x=>x.val).map(({ label, val, icon }) => (
+                    <div key={label} className="p-3 rounded-lg" style={{ background:'var(--bg)', border:'1px solid var(--border)' }}>
+                      <div className="text-xs mb-0.5" style={{ color:'var(--text-muted)' }}>{icon} {label}</div>
+                      <div className="text-sm font-semibold" style={{ color:'var(--text)' }}>{val}</div>
                     </div>
-                  ) : null)}
+                  ))}
                 </div>
 
                 {selected.suitable_aez?.length>0 && (
                   <div>
-                    <h4 className="text-xs font-black text-white/50 uppercase tracking-wider mb-2">🌍 Where to Grow</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selected.suitable_aez.map(z=><Badge key={z} color="rgba(96,165,250,0.2)" text="#93c5fd">{z}</Badge>)}
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color:'var(--text-muted)' }}>🌍 Where to Grow</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selected.suitable_aez.map(z=><Badge key={z} bg="#eff6ff" text="#1d4ed8">{z}</Badge>)}
                     </div>
                   </div>
                 )}
 
                 {selected.best_counties?.length>0 && (
                   <div>
-                    <h4 className="text-xs font-black text-white/50 uppercase tracking-wider mb-2">📍 Best Counties</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selected.best_counties.map(c=><Badge key={c} color="rgba(167,139,250,0.2)" text="#c4b5fd">{c}</Badge>)}
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color:'var(--text-muted)' }}>📍 Best Counties</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selected.best_counties.map(c=><Badge key={c} bg="#faf5ff" text="#7c3aed">{c}</Badge>)}
                     </div>
                   </div>
                 )}
 
                 {selected.soil_types?.length>0 && (
                   <div>
-                    <h4 className="text-xs font-black text-white/50 uppercase tracking-wider mb-2">🏔️ Soil Types</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selected.soil_types.map(s=><Badge key={s} color="rgba(251,191,36,0.2)" text="#fde68a">{s}</Badge>)}
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color:'var(--text-muted)' }}>🏔️ Soil Types</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selected.soil_types.map(s=><Badge key={s} bg="#fffbeb" text="#d97706">{s}</Badge>)}
                     </div>
                   </div>
                 )}
 
                 {selected.planting_months?.length>0 && (
                   <div>
-                    <h4 className="text-xs font-black text-white/50 uppercase tracking-wider mb-2">📅 Planting Months</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selected.planting_months.map(m=><Badge key={m} color="rgba(34,197,94,0.2)" text="#4ade80">{m}</Badge>)}
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color:'var(--text-muted)' }}>📅 Planting Months</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selected.planting_months.map(m=><Badge key={m} bg="#f0fdf4" text="#15803d">{m}</Badge>)}
                     </div>
                   </div>
                 )}
 
                 {selected.varieties?.length>0 && (
                   <div>
-                    <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider mb-2">🌱 Varieties & Cultivars</h4>
-                    <div className="grid grid-cols-1 gap-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color:'var(--green)' }}>🌱 Varieties</h4>
+                    <div className="space-y-2">
                       {selected.varieties.map((v,i)=>(
-                        <div key={i} className="p-3 rounded-xl" style={{ background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)' }}>
+                        <div key={i} className="p-3 rounded-lg" style={{ background:'#f0fdf4', border:'1px solid #bbf7d0' }}>
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="font-bold text-white text-sm">{v.name}</span>
-                            <Badge color="rgba(34,197,94,0.2)" text="#4ade80">{v.type}</Badge>
-                            {v.maturity_days && <span className="text-xs text-white/35">{v.maturity_days} days</span>}
+                            <span className="font-semibold text-sm" style={{ color:'var(--text)' }}>{v.name}</span>
+                            <Badge bg="#dcfce7" text="#15803d">{v.type}</Badge>
+                            {v.maturity_days && <span className="text-xs" style={{ color:'var(--text-muted)' }}>{v.maturity_days} days</span>}
                           </div>
-                          <p className="text-xs text-white/60 leading-relaxed">{v.notes}</p>
+                          <p className="text-xs leading-relaxed" style={{ color:'var(--text-muted)' }}>{v.notes}</p>
                         </div>
                       ))}
                     </div>
@@ -220,28 +234,29 @@ export default function CropAdvisor() {
                 )}
 
                 <div>
-                  <h4 className="text-xs font-black text-white/50 uppercase tracking-wider mb-2">🌿 Care Tips</h4>
-                  <p className="text-sm text-white/70 leading-relaxed">{selected.care_tips}</p>
+                  <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color:'var(--text-muted)' }}>🌿 Care Tips</h4>
+                  <p className="text-sm leading-relaxed" style={{ color:'var(--text)' }}>{selected.care_tips}</p>
                 </div>
 
                 {selected.diseases?.length>0 && (
                   <div>
-                    <h4 className="text-xs font-black text-red-400 uppercase tracking-wider mb-2">⚠️ Watch Out For</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selected.diseases.map(d=><Badge key={d} color="rgba(239,68,68,0.15)" text="#fca5a5">{d}</Badge>)}
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color:'#dc2626' }}>⚠️ Watch Out For</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selected.diseases.map(d=><Badge key={d} bg="#fef2f2" text="#dc2626">{d}</Badge>)}
                     </div>
                   </div>
                 )}
               </div>
-            </G>
+            </div>
           ) : (
-            <G className="h-full flex items-center justify-center py-24">
+            <div className="rounded-xl flex items-center justify-center py-24"
+              style={{ border:'1px dashed var(--border)', background:'white' }}>
               <div className="text-center">
-                <div className="text-6xl mb-4">🌾</div>
-                <h3 className="font-bold text-white/40 text-lg">Select a Crop</h3>
-                <p className="text-white/25 text-sm mt-1">Click any crop to see full details and growing guide</p>
+                <div className="text-5xl mb-3">🌾</div>
+                <h3 className="font-semibold mb-1" style={{ color:'var(--text)' }}>Select a Crop</h3>
+                <p className="text-sm" style={{ color:'var(--text-muted)' }}>Click any crop to see full details and growing guide</p>
               </div>
-            </G>
+            </div>
           )}
         </div>
       </div>
