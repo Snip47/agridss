@@ -6,6 +6,10 @@ import { Link } from 'react-router-dom'
 
 interface Stats { crops:number; animals:number; diseases:number; users:number }
 
+const G = ({ children, className='' }: { children:React.ReactNode; className?:string }) => (
+  <div className={className} style={{ background:'rgba(0,0,0,0.38)', backdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:'1rem' }}>{children}</div>
+)
+
 export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats|null>(null)
@@ -15,69 +19,55 @@ export default function Dashboard() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
-    <div className="fade-in max-w-4xl">
-      {/* Greeting */}
+    <div className="slide-up max-w-4xl">
       <div className="mb-8">
-        <p className="text-sm font-medium mb-1" style={{ color:'var(--text-muted)' }}>{greeting} 👋</p>
-        <h1 className="text-3xl font-bold" style={{ fontFamily:'Lora, serif', color:'var(--text)' }}>
-          {user?.name?.split(' ')[0] || 'Farmer'}
-        </h1>
+        <p className="text-sm font-medium mb-1 text-white/50">{greeting} 👋</p>
+        <h1 className="text-3xl font-black text-white drop-shadow-2xl">{user?.name?.split(' ')[0] || 'Farmer'}</h1>
         {user?.county && (
-          <p className="text-sm mt-1" style={{ color:'var(--text-muted)' }}>
-            📍 {user.county}{user.constituency ? `, ${user.constituency}` : ''}
-          </p>
+          <p className="text-sm mt-1 text-white/40">📍 {user.county}{(user as any).constituency ? `, ${(user as any).constituency}` : ''}</p>
         )}
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {[
-          { label:'Crops', val:stats?.crops??'—', icon:'🌱', color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0' },
-          { label:'Livestock', val:stats?.animals??'—', icon:'🐄', color:'#d97706', bg:'#fffbeb', border:'#fde68a' },
-          { label:'Diseases', val:stats?.diseases??'—', icon:'🦠', color:'#dc2626', bg:'#fef2f2', border:'#fecaca' },
-          { label:'Farmers', val:stats?.users??'—', icon:'👨‍🌾', color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
-        ].map(({ label, val, icon, color, bg, border }) => (
-          <div key={label} className="rounded-xl p-4" style={{ background:bg, border:`1px solid ${border}` }}>
-            <div className="text-2xl mb-1">{icon}</div>
-            <div className="text-2xl font-bold" style={{ color }}>{val}</div>
-            <div className="text-xs font-medium mt-0.5" style={{ color:'var(--text-muted)' }}>{label}</div>
-          </div>
+          { label:'Crops', val:stats?.crops??'—', icon:Sprout, color:'rgba(34,197,94,0.8)', bg:'rgba(34,197,94,0.15)', border:'rgba(34,197,94,0.3)', to:'/crops' },
+          { label:'Livestock', val:stats?.animals??'—', icon:Beef, color:'rgba(251,191,36,0.8)', bg:'rgba(251,191,36,0.15)', border:'rgba(251,191,36,0.3)', to:'/livestock' },
+          { label:'Diseases', val:stats?.diseases??'—', icon:Bug, color:'rgba(239,68,68,0.8)', bg:'rgba(239,68,68,0.15)', border:'rgba(239,68,68,0.3)', to:'/diseases' },
+          { label:'Farmers', val:stats?.users??'—', icon:Leaf, color:'rgba(96,165,250,0.8)', bg:'rgba(96,165,250,0.15)', border:'rgba(96,165,250,0.3)', to:'/' },
+        ].map(({ label, val, icon:Icon, color, bg, border, to }) => (
+          <Link key={label} to={to}
+            className="rounded-2xl p-5 transition-all duration-200 hover:scale-105"
+            style={{ background:bg, border:`1px solid ${border}`, backdropFilter:'blur(16px)', textDecoration:'none' }}>
+            <Icon className="w-6 h-6 mb-3" style={{ color }}/>
+            <div className="text-4xl font-black text-white mb-1">{val}</div>
+            <div className="text-xs text-white/50 font-medium">{label}</div>
+          </Link>
         ))}
       </div>
 
       {/* Quick links */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-3" style={{ fontFamily:'Lora, serif', color:'var(--text)' }}>
-          What do you need today?
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <G className="p-6 mb-4">
+        <h2 className="font-bold text-white mb-4 text-sm">Quick Access</h2>
+        <div className="space-y-2">
           {[
-            { to:'/crops', icon:Sprout, emoji:'🌱', label:'Crop Advisor', desc:'Find the right crops for your land', color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0' },
-            { to:'/livestock', icon:Beef, emoji:'🐄', label:'Livestock Advisor', desc:'Breeds, feeding and market info', color:'#d97706', bg:'#fffbeb', border:'#fde68a' },
-            { to:'/diseases', icon:Bug, emoji:'🦠', label:'Disease Diagnosis', desc:'Identify and treat crop and animal diseases', color:'#dc2626', bg:'#fef2f2', border:'#fecaca' },
-            { to:'/climate', icon:CloudSun, emoji:'🌍', label:'Climate Analysis', desc:'Rainfall, altitude and soil for your area', color:'#0369a1', bg:'#f0f9ff', border:'#bae6fd' },
-            { to:'/ai', icon:Bot, emoji:'🤖', label:'AI Farm Advisor', desc:'Ask any farming question or upload a photo', color:'#7c3aed', bg:'#faf5ff', border:'#e9d5ff' },
-          ].map(({ to, emoji, label, desc, color, bg, border }) => (
+            { label:'Climate & Location Analysis', to:'/climate', icon:'🌍' },
+            { label:'Crop Advisor', to:'/crops', icon:'🌱' },
+            { label:'Livestock Advisor', to:'/livestock', icon:'🐄' },
+            { label:'Disease Diagnosis', to:'/diseases', icon:'🦠' },
+            { label:'AI Farm Advisor', to:'/ai', icon:'🤖' },
+          ].map(({ label, to, icon }) => (
             <Link key={to} to={to}
-              className="flex items-center gap-4 p-4 rounded-xl transition-all duration-150 group"
-              style={{ background:bg, border:`1px solid ${border}`, textDecoration:'none' }}
-              onMouseEnter={e=>(e.currentTarget.style.transform='translateY(-1px)')}
-              onMouseLeave={e=>(e.currentTarget.style.transform='translateY(0)')}>
-              <div className="text-3xl flex-shrink-0">{emoji}</div>
-              <div className="flex-1">
-                <div className="font-semibold text-sm" style={{ color }}>{label}</div>
-                <div className="text-xs mt-0.5" style={{ color:'var(--text-muted)' }}>{desc}</div>
-              </div>
-              <ArrowRight className="w-4 h-4 opacity-30 group-hover:opacity-60 transition-opacity flex-shrink-0" style={{ color }}/>
+              className="flex items-center justify-between px-4 py-3 rounded-xl text-white text-sm font-medium transition-all duration-200"
+              style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.09)', textDecoration:'none' }}
+              onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.12)')}
+              onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,255,255,0.06)')}>
+              <span>{icon} {label}</span>
+              <ArrowRight className="w-4 h-4 opacity-40"/>
             </Link>
           ))}
         </div>
-      </div>
-
-      {/* Footer note */}
-      <p className="text-xs" style={{ color:'var(--text-muted)' }}>
-        🇰🇪 AgriDSS Kenya covers all 47 counties · {stats?.crops||60}+ crops · {stats?.animals||18} livestock types · {stats?.diseases||56} diseases
-      </p>
+      </G>
     </div>
   )
 }
