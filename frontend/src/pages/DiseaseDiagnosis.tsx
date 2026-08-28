@@ -1,38 +1,43 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
-import { Search, Trash2, X, AlertTriangle } from 'lucide-react'
+import { Bug, Search, AlertTriangle, ShieldCheck, Stethoscope, Trash2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 
 interface Disease { id:number; name:string; type:string; affects:string; symptoms:string; causes:string; treatment:string; prevention:string; severity:string }
 
-const SEV_STYLE:Record<string,{bg:string;border:string;text:string;label:string}> = {
-  critical: { bg:'#fef2f2', border:'#fecaca', text:'#dc2626', label:'Critical' },
-  high:     { bg:'#fff7ed', border:'#fed7aa', text:'#ea580c', label:'High' },
-  medium:   { bg:'#fffbeb', border:'#fde68a', text:'#d97706', label:'Medium' },
-  low:      { bg:'#f0fdf4', border:'#bbf7d0', text:'#16a34a', label:'Low' },
+const SEV:Record<string,{bg:string;text:string;border:string}> = {
+  low:     { bg:'rgba(34,197,94,0.15)',  text:'#4ade80', border:'rgba(34,197,94,0.3)' },
+  medium:  { bg:'rgba(251,191,36,0.15)', text:'#fbbf24', border:'rgba(251,191,36,0.3)' },
+  high:    { bg:'rgba(249,115,22,0.15)', text:'#fb923c', border:'rgba(249,115,22,0.3)' },
+  critical:{ bg:'rgba(239,68,68,0.15)',  text:'#f87171', border:'rgba(239,68,68,0.3)' },
 }
+
+const G = ({ children, className='' }: { children:React.ReactNode; className?:string }) => (
+  <div className={className} style={{ background:'rgba(0,0,0,0.38)', backdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:'1rem' }}>{children}</div>
+)
 
 export default function DiseaseDiagnosis() {
   const { user } = useAuth()
   const [diseases, setDiseases] = useState<Disease[]>([])
-  const [filters, setFilters] = useState({ type:'', search:'' })
+  const [keyword, setKeyword] = useState('')
+  const [type, setType] = useState('')
   const [selected, setSelected] = useState<Disease|null>(null)
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState<number|null>(null)
 
-  const fetch = async () => {
+  const search = async () => {
     setLoading(true)
     const p:any = {}
-    if (filters.type) p.type = filters.type
-    if (filters.search) p.search = filters.search
+    if (keyword) p.keyword = keyword
+    if (type) p.type = type
     const r = await api.get('/diseases/', { params:p })
     setDiseases(r.data); setLoading(false)
   }
 
-  useEffect(() => { fetch() }, [filters.type])
+  useEffect(() => { search() }, [type])
 
-  const del = async (id:number) => {
-    if (!confirm('Delete?')) return
+  const deleteDisease = async (id:number) => {
+    if (!confirm('Delete this disease entry?')) return
     setDeleting(id)
     await api.delete(`/diseases/${id}`)
     setDiseases(d=>d.filter(x=>x.id!==id))
@@ -41,74 +46,71 @@ export default function DiseaseDiagnosis() {
   }
 
   return (
-    <div className="fade-in max-w-6xl">
+    <div className="slide-up">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-1" style={{ fontFamily:'Lora, serif', color:'var(--text)' }}>🦠 Disease Diagnosis</h1>
-        <p className="text-sm" style={{ color:'var(--text-muted)' }}>{diseases.length} diseases — symptoms, causes, treatment and prevention</p>
+        <h1 className="text-4xl font-black text-white flex items-center gap-3 drop-shadow-2xl">
+          <Bug className="w-9 h-9 text-red-400"/> Disease Diagnosis
+        </h1>
+        <p className="text-white/55 mt-2">Describe symptoms or search by disease name. Covers crops and livestock.</p>
       </div>
 
-      {/* Filters */}
-      <div className="p-4 rounded-xl mb-5" style={{ background:'white', border:'1px solid var(--border)' }}>
-        <div className="flex gap-2 mb-3 flex-wrap">
-          {['','crop','livestock'].map(t=>(
-            <button key={t} onClick={()=>setFilters(f=>({...f,type:t}))}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize"
-              style={filters.type===t
-                ?{background:'var(--green)',color:'white',border:'1px solid var(--green)'}
-                :{background:'white',color:'var(--text-muted)',border:'1px solid var(--border)'}}>
-              {t==='crop'?'🌱 Crop diseases':t==='livestock'?'🐄 Livestock diseases':'All diseases'}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color:'var(--text-muted)' }}/>
-            <input placeholder="Search diseases..." value={filters.search}
-              onChange={e=>setFilters(f=>({...f,search:e.target.value}))}
-              onKeyDown={e=>e.key==='Enter'&&fetch()}
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg outline-none"
-              style={{ border:'1px solid var(--border)', background:'var(--bg)', color:'var(--text)' }}
-              onFocus={e=>(e.target.style.borderColor='#16a34a')}
-              onBlur={e=>(e.target.style.borderColor='var(--border)')}/>
+      <G className="p-4 mb-5">
+        <div className="flex gap-3 flex-wrap">
+          <div className="flex-1 min-w-48 relative">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/35"/>
+            <input placeholder="Describe symptoms or disease name..." value={keyword}
+              onChange={e=>setKeyword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&search()}
+              className="w-full pl-9 rounded-xl px-3 py-2 text-sm"
+              style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.18)', color:'white' }}/>
           </div>
-          <button onClick={fetch} className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
-            style={{ background:'var(--green)' }}>Search</button>
+          <div className="flex gap-2">
+            {[['','All'],['crop','🌱 Crop'],['livestock','🐄 Livestock']].map(([val,label])=>(
+              <button key={val} onClick={()=>setType(val)}
+                className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                style={type===val?{background:'rgba(239,68,68,0.6)',color:'white',border:'1px solid rgba(239,68,68,0.7)'}:{background:'rgba(255,255,255,0.07)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.12)'}}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <button onClick={search} className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all"
+            style={{ background:'rgba(239,68,68,0.7)', border:'1px solid rgba(239,68,68,0.5)' }}>
+            Search
+          </button>
         </div>
-      </div>
+      </G>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
         {/* List */}
-        <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto pr-1">
-          {loading && <p className="text-center py-8 text-sm" style={{ color:'var(--text-muted)' }}>Loading...</p>}
-          {!loading && diseases.length===0 && (
-            <div className="text-center py-8" style={{ color:'var(--text-muted)' }}>No diseases found.</div>
-          )}
+        <div className="lg:col-span-2 space-y-2 max-h-[70vh] overflow-y-auto scrollbar-thin pr-1">
+          {loading && <div className="text-center py-8 text-white/40 text-sm">Searching...</div>}
+          {!loading && diseases.length===0 && <G className="py-8 text-center text-white/40 text-sm">No diseases found.</G>}
           {diseases.map(d=>{
-            const sev = SEV_STYLE[d.severity]||SEV_STYLE.medium
+            const s = SEV[d.severity]||SEV.low
             return (
               <div key={d.id} onClick={()=>setSelected(d)}
-                className="p-3 rounded-xl cursor-pointer transition-all"
+                className="p-4 rounded-xl cursor-pointer transition-all duration-200"
                 style={selected?.id===d.id
-                  ?{border:'2px solid var(--green)',background:'#f0fdf4'}
-                  :{border:'1px solid var(--border)',background:'white'}}
-                onMouseEnter={e=>selected?.id!==d.id&&(e.currentTarget.style.borderColor='#86efac')}
-                onMouseLeave={e=>selected?.id!==d.id&&(e.currentTarget.style.borderColor='var(--border)')}>
+                  ? { background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.35)', backdropFilter:'blur(16px)' }
+                  : { background:'rgba(0,0,0,0.32)', border:'1px solid rgba(255,255,255,0.09)', backdropFilter:'blur(16px)' }}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm mb-0.5" style={{ color:'var(--text)' }}>{d.name}</div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background:sev.bg, color:sev.text, border:`1px solid ${sev.border}` }}>
-                        {sev.label}
-                      </span>
-                      <span className="text-xs capitalize" style={{ color:'var(--text-muted)' }}>
-                        {d.type==='crop'?'🌱':'🐄'} {d.affects}
-                      </span>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-bold text-white text-sm">{d.name}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
+                        style={{ background:s.bg, color:s.text, border:`1px solid ${s.border}` }}>{d.severity}</span>
                     </div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs px-2 py-0.5 rounded-full"
+                        style={d.type==='crop'?{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'1px solid rgba(34,197,94,0.25)'}:{background:'rgba(251,191,36,0.15)',color:'#fbbf24',border:'1px solid rgba(251,191,36,0.25)'}}>
+                        {d.type}
+                      </span>
+                      <span className="text-xs text-white/40">{d.affects}</span>
+                    </div>
+                    <p className="text-xs text-white/45 line-clamp-2">{d.symptoms}</p>
                   </div>
                   {user?.role==='admin' && (
-                    <button onClick={e=>{e.stopPropagation();del(d.id)}} disabled={deleting===d.id}
-                      className="p-1.5 rounded-lg transition-colors flex-shrink-0"
-                      style={{ color:'#dc2626', background:'#fef2f2' }}>
+                    <button onClick={e=>{e.stopPropagation();deleteDisease(d.id)}} disabled={deleting===d.id}
+                      className="p-1 text-red-400 hover:text-red-300 rounded flex-shrink-0">
                       <Trash2 className="w-3.5 h-3.5"/>
                     </button>
                   )}
@@ -121,53 +123,46 @@ export default function DiseaseDiagnosis() {
         {/* Detail */}
         <div className="lg:col-span-3">
           {selected ? (
-            <div className="rounded-xl overflow-hidden" style={{ border:'1px solid var(--border)', background:'white' }}>
-              {/* Header */}
-              <div className="p-5 border-b relative" style={{ borderColor:'var(--border)' }}>
-                <button onClick={()=>setSelected(null)} className="absolute top-4 right-4 p-1.5 rounded-lg"
-                  style={{ background:'var(--bg)', color:'var(--text-muted)' }}>
-                  <X className="w-4 h-4"/>
-                </button>
-                <div className="flex items-start gap-3 pr-10">
-                  <AlertTriangle className="w-6 h-6 mt-0.5 flex-shrink-0" style={{ color:(SEV_STYLE[selected.severity]||SEV_STYLE.medium).text }}/>
-                  <div>
-                    <h2 className="font-bold text-lg" style={{ fontFamily:'Lora, serif', color:'var(--text)' }}>{selected.name}</h2>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                        style={{ background:(SEV_STYLE[selected.severity]||SEV_STYLE.medium).bg, color:(SEV_STYLE[selected.severity]||SEV_STYLE.medium).text, border:`1px solid ${(SEV_STYLE[selected.severity]||SEV_STYLE.medium).border}` }}>
-                        {(SEV_STYLE[selected.severity]||SEV_STYLE.medium).label} severity
-                      </span>
-                      <span className="text-xs" style={{ color:'var(--text-muted)' }}>
-                        {selected.type==='crop'?'🌱 Crop disease':'🐄 Livestock disease'} · Affects: {selected.affects}
-                      </span>
-                    </div>
+            <G className="p-6 sticky top-6">
+              <div className="flex items-start justify-between mb-4 gap-3">
+                <div>
+                  <h2 className="font-black text-white text-xl">{selected.name}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs px-2 py-0.5 rounded-full"
+                      style={selected.type==='crop'?{background:'rgba(34,197,94,0.15)',color:'#4ade80',border:'1px solid rgba(34,197,94,0.25)'}:{background:'rgba(251,191,36,0.15)',color:'#fbbf24',border:'1px solid rgba(251,191,36,0.25)'}}>
+                      {selected.type}
+                    </span>
+                    <span className="text-xs text-white/45">Affects: <strong className="text-white/70">{selected.affects}</strong></span>
                   </div>
                 </div>
+                <span className="text-xs px-3 py-1.5 rounded-full font-bold capitalize flex-shrink-0"
+                  style={{ background:(SEV[selected.severity]||SEV.low).bg, color:(SEV[selected.severity]||SEV.low).text, border:`1px solid ${(SEV[selected.severity]||SEV.low).border}` }}>
+                  {selected.severity} severity
+                </span>
               </div>
 
-              <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-3">
                 {[
-                  { label:'Symptoms', content:selected.symptoms, color:'#dc2626', bg:'#fef2f2', border:'#fecaca', emoji:'🔍' },
-                  { label:'Causes', content:selected.causes, color:'#d97706', bg:'#fffbeb', border:'#fde68a', emoji:'🧬' },
-                  { label:'Treatment', content:selected.treatment, color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0', emoji:'💊' },
-                  { label:'Prevention', content:selected.prevention, color:'#0369a1', bg:'#f0f9ff', border:'#bae6fd', emoji:'🛡️' },
-                ].map(({ label, content, color, bg, border, emoji }) => content ? (
+                  { icon:Stethoscope, label:'Symptoms', content:selected.symptoms, bg:'rgba(249,115,22,0.12)', border:'rgba(249,115,22,0.25)', color:'#fb923c' },
+                  { icon:Bug, label:'Causes', content:selected.causes, bg:'rgba(239,68,68,0.12)', border:'rgba(239,68,68,0.25)', color:'#f87171' },
+                  { icon:AlertTriangle, label:'Treatment', content:selected.treatment, bg:'rgba(96,165,250,0.12)', border:'rgba(96,165,250,0.25)', color:'#60a5fa' },
+                  { icon:ShieldCheck, label:'Prevention', content:selected.prevention, bg:'rgba(34,197,94,0.12)', border:'rgba(34,197,94,0.25)', color:'#4ade80' },
+                ].map(({ icon:Icon, label, content, bg, border, color })=>(
                   <div key={label} className="p-4 rounded-xl" style={{ background:bg, border:`1px solid ${border}` }}>
-                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color }}>{emoji} {label}</h4>
-                    <p className="text-sm leading-relaxed" style={{ color:'var(--text)' }}>{content}</p>
+                    <h3 className="text-xs font-black uppercase flex items-center gap-1.5 mb-2" style={{ color }}>
+                      <Icon className="w-3.5 h-3.5"/>{label}
+                    </h3>
+                    <p className="text-sm text-white/70 leading-relaxed">{content}</p>
                   </div>
-                ) : null)}
+                ))}
               </div>
-            </div>
+            </G>
           ) : (
-            <div className="rounded-xl flex items-center justify-center py-24"
-              style={{ border:'1px dashed var(--border)', background:'white' }}>
-              <div className="text-center">
-                <div className="text-5xl mb-3">🦠</div>
-                <h3 className="font-semibold mb-1" style={{ color:'var(--text)' }}>Select a Disease</h3>
-                <p className="text-sm" style={{ color:'var(--text-muted)' }}>Click any disease to see full details and treatment guide</p>
-              </div>
-            </div>
+            <G className="py-20 text-center">
+              <Bug className="w-16 h-16 mx-auto mb-4 text-white/15"/>
+              <h3 className="font-bold text-white/40 mb-1">Select a Disease</h3>
+              <p className="text-sm text-white/25">Click any disease to see full diagnosis details.</p>
+            </G>
           )}
         </div>
       </div>
