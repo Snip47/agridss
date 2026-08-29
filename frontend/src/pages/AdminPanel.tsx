@@ -1,250 +1,351 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
-import { useAuth } from '../lib/auth'
-import { Navigate } from 'react-router-dom'
-import { Settings, Sprout, Beef, Bug, Users, CheckCircle, AlertCircle, Plus } from 'lucide-react'
+import { Trash2, Users, Sprout, Beef, Bug, Plus, X, AlertTriangle, Shield } from 'lucide-react'
 
-type Tab = 'crops'|'livestock'|'diseases'|'users'
+interface User { id:number; name:string; email:string; role:string; county?:string; constituency?:string; created_at:string }
+interface Stats { crops:number; animals:number; diseases:number; users:number }
 
 const G = ({ children, className='' }: { children:React.ReactNode; className?:string }) => (
   <div className={className} style={{ background:'rgba(0,0,0,0.38)', backdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:'1rem' }}>{children}</div>
 )
 
-const inputStyle = { background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.18)', color:'white', borderRadius:'0.75rem', padding:'0.5rem 0.75rem', fontSize:'0.875rem', width:'100%' }
-
-const Field = ({ label, value, onChange, textarea, type='text', placeholder='' }:
-  { label:string; value:string; onChange:(v:string)=>void; textarea?:boolean; type?:string; placeholder?:string }) => (
-  <div>
-    <label className="block text-xs font-semibold text-white/50 mb-1.5">{label}</label>
-    {textarea
-      ? <textarea value={value} onChange={e=>onChange(e.target.value)} rows={3} placeholder={placeholder} style={{...inputStyle,resize:'vertical'}}/>
-      : <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={inputStyle}/>
-    }
-  </div>
+const Badge = ({ children, color='rgba(255,255,255,0.1)', text='rgba(255,255,255,0.7)' }: any) => (
+  <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background:color, color:text }}>{children}</span>
 )
 
 export default function AdminPanel() {
-  const { user } = useAuth()
-  const [tab, setTab] = useState<Tab>('crops')
-  const [toast, setToast] = useState<{msg:string;type:'success'|'error'}|null>(null)
+  const [tab, setTab] = useState<'users'|'add'>('users')
+  const [users, setUsers] = useState<User[]>([])
+  const [stats, setStats] = useState<Stats|null>(null)
   const [loading, setLoading] = useState(false)
-  const [users, setUsers] = useState<any[]>([])
+  const [deleting, setDeleting] = useState<number|null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<User|null>(null)
+  const [msg, setMsg] = useState('')
+  const [error, setError] = useState('')
 
-  const notify = (msg:string, type:'success'|'error') => { setToast({msg,type}); setTimeout(()=>setToast(null),3500) }
+  // Add forms
+  const [cropForm, setCropForm] = useState({ name:'', category:'cereal', description:'', care_tips:'', expected_yield:'', market_price_ksh:'' })
+  const [animalForm, setAnimalForm] = useState({ name:'', category:'cattle', purpose:'dairy', description:'', feeding_guide:'', housing_requirements:'' })
+  const [diseaseForm, setDiseaseForm] = useState({ name:'', type:'crop', affects:'', symptoms:'', causes:'', treatment:'', prevention:'', severity:'medium' })
 
   useEffect(() => {
-    if (tab==='users') api.get('/dashboard/users').then(r=>setUsers(r.data)).catch(()=>{})
-  }, [tab])
+    fetchUsers()
+    api.get('/dashboard/stats').then(r=>setStats(r.data)).catch(()=>{})
+  }, [])
 
-  if (user?.role!=='admin') return <Navigate to="/"/>
-
-  const [crop, setCrop] = useState({ name:'',category:'cereal',subcategory:'',description:'',care_tips:'',expected_yield:'',market_price_ksh:'',water_requirement:'moderate',maturity_days:'90',rainfall_min_mm:'400',rainfall_max_mm:'1600',altitude_min_m:'0',altitude_max_m:'3000',suitable_aez:'',soil_types:'',planting_months:'',diseases:'',best_counties:'' })
-  const [animal, setAnimal] = useState({ name:'',category:'cattle',purpose:'dairy',description:'',feeding_guide:'',housing_requirements:'',breeding_info:'',market_info:'',water_requirement:'',space_required:'',suitable_aez:'',common_diseases:'' })
-  const [disease, setDisease] = useState({ name:'',type:'crop',affects:'',symptoms:'',causes:'',treatment:'',prevention:'',severity:'medium' })
-
-  const addCrop = async () => {
-    if (!crop.name) return notify('Crop name is required','error')
+  const fetchUsers = async () => {
     setLoading(true)
     try {
-      await api.post('/crops/', { ...crop, maturity_days:parseInt(crop.maturity_days)||90, rainfall_min_mm:parseInt(crop.rainfall_min_mm)||400, rainfall_max_mm:parseInt(crop.rainfall_max_mm)||1600, altitude_min_m:parseInt(crop.altitude_min_m)||0, altitude_max_m:parseInt(crop.altitude_max_m)||3000, suitable_aez:crop.suitable_aez.split(',').map(s=>s.trim()).filter(Boolean), soil_types:crop.soil_types.split(',').map(s=>s.trim()).filter(Boolean), planting_months:crop.planting_months.split(',').map(s=>s.trim()).filter(Boolean), diseases:crop.diseases.split(',').map(s=>s.trim()).filter(Boolean), best_counties:crop.best_counties.split(',').map(s=>s.trim()).filter(Boolean), varieties:[] })
-      notify('Crop added!','success')
-      setCrop(c=>({...c,name:'',description:'',care_tips:'',expected_yield:'',market_price_ksh:''}))
-    } catch { notify('Failed to add crop','error') }
+      const r = await api.get('/dashboard/users')
+      setUsers(r.data)
+    } catch { setError('Failed to load users') }
     setLoading(false)
   }
 
-  const addAnimal = async () => {
-    if (!animal.name) return notify('Animal name is required','error')
-    setLoading(true)
+  const handleDeleteUser = async (user: User) => {
+    setDeleting(user.id)
     try {
-      await api.post('/livestock/', { ...animal, suitable_aez:animal.suitable_aez.split(',').map(s=>s.trim()).filter(Boolean), common_diseases:animal.common_diseases.split(',').map(s=>s.trim()).filter(Boolean), breeds:[], vaccination_schedule:[] })
-      notify('Animal added!','success')
-      setAnimal(a=>({...a,name:'',description:'',feeding_guide:'',housing_requirements:'',breeding_info:'',market_info:''}))
-    } catch { notify('Failed to add animal','error') }
-    setLoading(false)
+      await api.delete(`/dashboard/users/${user.id}`)
+      setUsers(u => u.filter(x => x.id !== user.id))
+      setConfirmDelete(null)
+      setMsg(`User "${user.name}" deleted successfully.`)
+      setTimeout(() => setMsg(''), 3000)
+    } catch (e: any) {
+      setError(e?.response?.data?.detail || 'Failed to delete user')
+      setTimeout(() => setError(''), 3000)
+    }
+    setDeleting(null)
   }
 
-  const addDisease = async () => {
-    if (!disease.name) return notify('Disease name is required','error')
-    setLoading(true)
-    try { await api.post('/diseases/', disease); notify('Disease added!','success'); setDisease(d=>({...d,name:'',affects:'',symptoms:'',causes:'',treatment:'',prevention:''})) }
-    catch { notify('Failed to add disease','error') }
-    setLoading(false)
+  const addCrop = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await api.post('/crops/', { ...cropForm, varieties:[], suitable_aez:[], soil_types:[], planting_months:[], diseases:[], best_counties:[], rainfall_min_mm:400, rainfall_max_mm:1200, altitude_min_m:0, altitude_max_m:2000, water_requirement:'moderate', maturity_days:90, subcategory:'' })
+      setMsg('Crop added!'); setCropForm({ name:'', category:'cereal', description:'', care_tips:'', expected_yield:'', market_price_ksh:'' })
+      setTimeout(() => setMsg(''), 3000)
+    } catch (e:any) { setError(e?.response?.data?.detail || 'Failed'); setTimeout(()=>setError(''),3000) }
   }
 
-  const tabs = [{ id:'crops' as Tab,icon:Sprout,label:'Crops',color:'text-green-400' },{ id:'livestock' as Tab,icon:Beef,label:'Livestock',color:'text-amber-400' },{ id:'diseases' as Tab,icon:Bug,label:'Diseases',color:'text-red-400' },{ id:'users' as Tab,icon:Users,label:'Users',color:'text-blue-400' }]
+  const addAnimal = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await api.post('/livestock/', { ...animalForm, breeds:[], suitable_aez:[], vaccination_schedule:[], common_diseases:[], breeding_info:'', market_info:'', water_requirement:'', space_required:'' })
+      setMsg('Livestock added!'); setAnimalForm({ name:'', category:'cattle', purpose:'dairy', description:'', feeding_guide:'', housing_requirements:'' })
+      setTimeout(() => setMsg(''), 3000)
+    } catch (e:any) { setError(e?.response?.data?.detail || 'Failed'); setTimeout(()=>setError(''),3000) }
+  }
 
-  const btnColors:Record<Tab,string> = { crops:'rgba(34,197,94,0.7)', livestock:'rgba(251,191,36,0.7)', diseases:'rgba(239,68,68,0.7)', users:'rgba(96,165,250,0.7)' }
+  const addDisease = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await api.post('/diseases/', diseaseForm)
+      setMsg('Disease added!'); setDiseaseForm({ name:'', type:'crop', affects:'', symptoms:'', causes:'', treatment:'', prevention:'', severity:'medium' })
+      setTimeout(() => setMsg(''), 3000)
+    } catch (e:any) { setError(e?.response?.data?.detail || 'Failed'); setTimeout(()=>setError(''),3000) }
+  }
+
+  const iStyle = {
+    background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)',
+    color:'white', borderRadius:'0.75rem', padding:'0.6rem 0.85rem',
+    fontSize:'0.875rem', width:'100%', outline:'none'
+  }
+  const sStyle = { ...iStyle, cursor:'pointer' }
 
   return (
     <div className="slide-up">
-      {toast && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-white shadow-2xl"
-          style={toast.type==='success'?{background:'rgba(34,197,94,0.85)',border:'1px solid rgba(34,197,94,0.5)'}:{background:'rgba(239,68,68,0.85)',border:'1px solid rgba(239,68,68,0.5)'}}>
-          {toast.type==='success'?<CheckCircle className="w-4 h-4"/>:<AlertCircle className="w-4 h-4"/>}
-          {toast.msg}
+      <div className="mb-6 flex items-center gap-3">
+        <Shield className="w-7 h-7 text-purple-400"/>
+        <div>
+          <h1 className="text-3xl font-black text-white">Admin Panel</h1>
+          <p className="text-white/45 text-sm">Manage users, crops, livestock and diseases</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label:'Crops', val:stats.crops, icon:'🌱', color:'rgba(34,197,94,0.7)' },
+            { label:'Livestock', val:stats.animals, icon:'🐄', color:'rgba(251,191,36,0.7)' },
+            { label:'Diseases', val:stats.diseases, icon:'🦠', color:'rgba(239,68,68,0.7)' },
+            { label:'Users', val:stats.users, icon:'👥', color:'rgba(96,165,250,0.7)' },
+          ].map(({ label, val, icon, color }) => (
+            <div key={label} className="p-4 rounded-xl text-center"
+              style={{ background:'rgba(0,0,0,0.35)', backdropFilter:'blur(16px)', border:'1px solid rgba(255,255,255,0.1)' }}>
+              <div className="text-2xl mb-1">{icon}</div>
+              <div className="text-2xl font-black text-white">{val}</div>
+              <div className="text-xs text-white/45">{label}</div>
+            </div>
+          ))}
         </div>
       )}
 
-      <div className="mb-6">
-        <h1 className="text-4xl font-black text-white flex items-center gap-3 drop-shadow-2xl">
-          <Settings className="w-9 h-9 text-white/60"/> Admin Panel
-        </h1>
-        <p className="text-white/55 mt-2">Manage the AgriDSS knowledge base — crops, livestock, diseases and users.</p>
+      {/* Alerts */}
+      {msg && (
+        <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium text-green-300"
+          style={{ background:'rgba(34,197,94,0.15)', border:'1px solid rgba(34,197,94,0.3)' }}>
+          ✅ {msg}
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium text-red-300"
+          style={{ background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.3)' }}>
+          ❌ {error}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-5">
+        {[
+          { id:'users', label:'👥 Users', icon:Users },
+          { id:'add', label:'➕ Add Data', icon:Plus },
+        ].map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id as any)}
+            className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
+            style={tab===t.id
+              ?{background:'rgba(168,85,247,0.7)',color:'white',border:'1px solid rgba(168,85,247,0.5)'}
+              :{background:'rgba(255,255,255,0.07)',color:'rgba(255,255,255,0.6)',border:'1px solid rgba(255,255,255,0.12)'}}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      <G className="overflow-hidden">
-        {/* Tabs */}
-        <div className="flex" style={{ borderBottom:'1px solid rgba(255,255,255,0.09)' }}>
-          {tabs.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)}
-              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-bold transition-all ${tab===t.id?`${t.color}`:'text-white/40 hover:text-white/65'}`}
-              style={tab===t.id?{borderBottom:`2px solid currentColor`}:{borderBottom:'2px solid transparent'}}>
-              <t.icon className="w-4 h-4"/>{t.label}
-            </button>
-          ))}
+      {/* USERS TAB */}
+      {tab==='users' && (
+        <G className="overflow-hidden">
+          <div className="p-4 border-b" style={{ borderColor:'rgba(255,255,255,0.08)' }}>
+            <h2 className="font-bold text-white">Registered Users</h2>
+            <p className="text-xs text-white/40 mt-0.5">{users.length} total users · Admin accounts cannot be deleted</p>
+          </div>
+          {loading ? (
+            <div className="p-8 text-center text-white/40 text-sm">Loading users...</div>
+          ) : (
+            <div className="divide-y" style={{ divideColor:'rgba(255,255,255,0.06)' }}>
+              {users.map(u=>(
+                <div key={u.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                      style={{ background: u.role==='admin' ? 'rgba(168,85,247,0.5)' : 'rgba(34,197,94,0.4)', border:`1px solid ${u.role==='admin'?'rgba(168,85,247,0.5)':'rgba(34,197,94,0.4)'}` }}>
+                      {u.name?.[0]?.toUpperCase()||'U'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-white text-sm">{u.name}</span>
+                        <Badge
+                          color={u.role==='admin'?'rgba(168,85,247,0.25)':'rgba(34,197,94,0.2)'}
+                          text={u.role==='admin'?'#c084fc':'#4ade80'}>
+                          {u.role}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-white/40 truncate">{u.email}</div>
+                      {u.county && <div className="text-xs text-white/30">📍 {u.county}{u.constituency?`, ${u.constituency}`:''}</div>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs text-white/25 hidden sm:block">
+                      {new Date(u.created_at).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'2-digit'})}
+                    </span>
+                    {u.role !== 'admin' ? (
+                      <button
+                        onClick={()=>setConfirmDelete(u)}
+                        disabled={deleting===u.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                        style={{ background:'rgba(239,68,68,0.15)', color:'#f87171', border:'1px solid rgba(239,68,68,0.3)' }}
+                        onMouseEnter={e=>(e.currentTarget.style.background='rgba(239,68,68,0.3)')}
+                        onMouseLeave={e=>(e.currentTarget.style.background='rgba(239,68,68,0.15)')}>
+                        <Trash2 className="w-3.5 h-3.5"/>
+                        Delete
+                      </button>
+                    ) : (
+                      <span className="text-xs text-white/20 px-3 py-1.5">Protected</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {users.length===0 && (
+                <div className="p-8 text-center text-white/40 text-sm">No users found.</div>
+              )}
+            </div>
+          )}
+        </G>
+      )}
+
+      {/* ADD DATA TAB */}
+      {tab==='add' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Add Crop */}
+          <G className="p-5">
+            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+              <Sprout className="w-4 h-4 text-green-400"/> Add Crop
+            </h3>
+            <form onSubmit={addCrop} className="space-y-3">
+              {[
+                { k:'name', ph:'Crop name e.g. Yam' },
+                { k:'description', ph:'Brief description' },
+                { k:'care_tips', ph:'Care tips' },
+                { k:'expected_yield', ph:'Expected yield' },
+                { k:'market_price_ksh', ph:'Market price (KSh)' },
+              ].map(({ k, ph }) => (
+                <input key={k} value={(cropForm as any)[k]} onChange={e=>setCropForm(f=>({...f,[k]:e.target.value}))}
+                  placeholder={ph} required={k==='name'} style={iStyle}/>
+              ))}
+              <select value={cropForm.category} onChange={e=>setCropForm(f=>({...f,category:e.target.value}))} style={sStyle}>
+                {['cereal','legume','vegetable','fruit','cash crop','flower'].map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+              <button type="submit" className="w-full py-2.5 rounded-xl font-bold text-sm text-white"
+                style={{ background:'rgba(34,197,94,0.7)', border:'1px solid rgba(34,197,94,0.5)' }}>
+                Add Crop
+              </button>
+            </form>
+          </G>
+
+          {/* Add Livestock */}
+          <G className="p-5">
+            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+              <Beef className="w-4 h-4 text-amber-400"/> Add Livestock
+            </h3>
+            <form onSubmit={addAnimal} className="space-y-3">
+              {[
+                { k:'name', ph:'Animal name e.g. Goat' },
+                { k:'description', ph:'Brief description' },
+                { k:'feeding_guide', ph:'Feeding guide' },
+                { k:'housing_requirements', ph:'Housing requirements' },
+              ].map(({ k, ph }) => (
+                <input key={k} value={(animalForm as any)[k]} onChange={e=>setAnimalForm(f=>({...f,[k]:e.target.value}))}
+                  placeholder={ph} required={k==='name'} style={iStyle}/>
+              ))}
+              <select value={animalForm.category} onChange={e=>setAnimalForm(f=>({...f,category:e.target.value}))} style={sStyle}>
+                {['cattle','goat','sheep','poultry','rabbit','pig','fish','bees','camel','donkey','duck','quail','ostrich'].map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={animalForm.purpose} onChange={e=>setAnimalForm(f=>({...f,purpose:e.target.value}))} style={sStyle}>
+                {['dairy','meat','dual','eggs','honey','draft/transport'].map(p=><option key={p} value={p}>{p}</option>)}
+              </select>
+              <button type="submit" className="w-full py-2.5 rounded-xl font-bold text-sm text-white"
+                style={{ background:'rgba(251,191,36,0.7)', border:'1px solid rgba(251,191,36,0.5)' }}>
+                Add Livestock
+              </button>
+            </form>
+          </G>
+
+          {/* Add Disease */}
+          <G className="p-5">
+            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+              <Bug className="w-4 h-4 text-red-400"/> Add Disease
+            </h3>
+            <form onSubmit={addDisease} className="space-y-3">
+              {[
+                { k:'name', ph:'Disease name' },
+                { k:'affects', ph:'Affects e.g. Maize, Cattle' },
+                { k:'symptoms', ph:'Symptoms' },
+                { k:'causes', ph:'Causes' },
+                { k:'treatment', ph:'Treatment' },
+                { k:'prevention', ph:'Prevention' },
+              ].map(({ k, ph }) => (
+                <input key={k} value={(diseaseForm as any)[k]} onChange={e=>setDiseaseForm(f=>({...f,[k]:e.target.value}))}
+                  placeholder={ph} required={k==='name'} style={iStyle}/>
+              ))}
+              <div className="grid grid-cols-2 gap-2">
+                <select value={diseaseForm.type} onChange={e=>setDiseaseForm(f=>({...f,type:e.target.value}))} style={sStyle}>
+                  <option value="crop">Crop</option>
+                  <option value="livestock">Livestock</option>
+                </select>
+                <select value={diseaseForm.severity} onChange={e=>setDiseaseForm(f=>({...f,severity:e.target.value}))} style={sStyle}>
+                  {['low','medium','high','critical'].map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <button type="submit" className="w-full py-2.5 rounded-xl font-bold text-sm text-white"
+                style={{ background:'rgba(239,68,68,0.7)', border:'1px solid rgba(239,68,68,0.5)' }}>
+                Add Disease
+              </button>
+            </form>
+          </G>
         </div>
+      )}
 
-        <div className="p-6">
-          {tab==='crops' && (
-            <div className="max-w-2xl space-y-4">
-              <h2 className="font-bold text-white flex items-center gap-2"><Plus className="w-4 h-4 text-green-400"/> Add New Crop</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Crop Name *" value={crop.name} onChange={v=>setCrop(c=>({...c,name:v}))} placeholder="e.g. Cassava (Muhogo)"/>
-                <div><label className="block text-xs font-semibold text-white/50 mb-1.5">Category</label>
-                  <select value={crop.category} onChange={e=>setCrop(c=>({...c,category:e.target.value}))} style={inputStyle}>
-                    {['cereal','legume','vegetable','fruit','cash crop'].map(o=><option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <Field label="Sub-category" value={crop.subcategory} onChange={v=>setCrop(c=>({...c,subcategory:v}))} placeholder="e.g. root vegetable"/>
-                <div><label className="block text-xs font-semibold text-white/50 mb-1.5">Water Requirement</label>
-                  <select value={crop.water_requirement} onChange={e=>setCrop(c=>({...c,water_requirement:e.target.value}))} style={inputStyle}>
-                    {['low','moderate','high'].map(o=><option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
+      {/* Delete Confirm Modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={()=>setConfirmDelete(null)}/>
+          <div className="relative w-full max-w-sm rounded-2xl p-6 z-10"
+            style={{ background:'rgba(20,20,30,0.95)', border:'1px solid rgba(239,68,68,0.4)', backdropFilter:'blur(20px)' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background:'rgba(239,68,68,0.2)' }}>
+                <AlertTriangle className="w-5 h-5 text-red-400"/>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <Field label="Maturity Days" value={crop.maturity_days} onChange={v=>setCrop(c=>({...c,maturity_days:v}))} type="number"/>
-                <Field label="Min Rainfall (mm)" value={crop.rainfall_min_mm} onChange={v=>setCrop(c=>({...c,rainfall_min_mm:v}))} type="number"/>
-                <Field label="Max Rainfall (mm)" value={crop.rainfall_max_mm} onChange={v=>setCrop(c=>({...c,rainfall_max_mm:v}))} type="number"/>
+              <div>
+                <h3 className="font-bold text-white">Delete User</h3>
+                <p className="text-xs text-white/40">This cannot be undone</p>
               </div>
-              <Field label="AEZ Codes (comma-separated e.g. LH2,LH3,UM2)" value={crop.suitable_aez} onChange={v=>setCrop(c=>({...c,suitable_aez:v}))} placeholder="LH2,LH3,UM2"/>
-              <Field label="Soil Types (comma-separated)" value={crop.soil_types} onChange={v=>setCrop(c=>({...c,soil_types:v}))} placeholder="loam, clay loam, sandy loam"/>
-              <Field label="Planting Months (comma-separated)" value={crop.planting_months} onChange={v=>setCrop(c=>({...c,planting_months:v}))} placeholder="March, April, October"/>
-              <Field label="Description" value={crop.description} onChange={v=>setCrop(c=>({...c,description:v}))} textarea placeholder="Brief description..."/>
-              <Field label="Care Tips" value={crop.care_tips} onChange={v=>setCrop(c=>({...c,care_tips:v}))} textarea placeholder="Fertilizer, spacing, pest control..."/>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Expected Yield" value={crop.expected_yield} onChange={v=>setCrop(c=>({...c,expected_yield:v}))} placeholder="e.g. 20-40 bags/acre"/>
-                <Field label="Market Price (KSh)" value={crop.market_price_ksh} onChange={v=>setCrop(c=>({...c,market_price_ksh:v}))} placeholder="e.g. 3000-4500 per 90kg"/>
-              </div>
-              <Field label="Common Diseases (comma-separated)" value={crop.diseases} onChange={v=>setCrop(c=>({...c,diseases:v}))} placeholder="Late Blight, Aphids, Stalk Borer"/>
-              <Field label="Best Counties (comma-separated)" value={crop.best_counties} onChange={v=>setCrop(c=>({...c,best_counties:v}))} placeholder="Nakuru, Nyandarua, Meru"/>
-              <button onClick={addCrop} disabled={loading} className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
-                style={{ background:btnColors[tab], border:'1px solid rgba(255,255,255,0.2)' }}>
-                <Plus className="w-4 h-4"/>{loading?'Adding...':'Add Crop'}
+              <button onClick={()=>setConfirmDelete(null)} className="ml-auto text-white/40 hover:text-white">
+                <X className="w-5 h-5"/>
               </button>
             </div>
-          )}
-
-          {tab==='livestock' && (
-            <div className="max-w-2xl space-y-4">
-              <h2 className="font-bold text-white flex items-center gap-2"><Plus className="w-4 h-4 text-amber-400"/> Add New Animal</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Animal Name *" value={animal.name} onChange={v=>setAnimal(a=>({...a,name:v}))} placeholder="e.g. Sheep (Kondoo)"/>
-                <div><label className="block text-xs font-semibold text-white/50 mb-1.5">Category</label>
-                  <select value={animal.category} onChange={e=>setAnimal(a=>({...a,category:e.target.value}))} style={inputStyle}>
-                    {['cattle','goat','sheep','poultry','rabbit','pig','fish','bees','camel','donkey'].map(o=><option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <div><label className="block text-xs font-semibold text-white/50 mb-1.5">Purpose</label>
-                  <select value={animal.purpose} onChange={e=>setAnimal(a=>({...a,purpose:e.target.value}))} style={inputStyle}>
-                    {['dairy','meat','eggs','dual','honey/pollination','draft/transport','meat/wool'].map(o=><option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <Field label="Water Requirement" value={animal.water_requirement} onChange={v=>setAnimal(a=>({...a,water_requirement:v}))} placeholder="e.g. 60-80L/day"/>
-                <Field label="Space Required" value={animal.space_required} onChange={v=>setAnimal(a=>({...a,space_required:v}))} placeholder="e.g. 3x4m per animal"/>
-              </div>
-              <Field label="AEZ Zones (comma-separated or 'All zones')" value={animal.suitable_aez} onChange={v=>setAnimal(a=>({...a,suitable_aez:v}))} placeholder="LH2,LH3,UM2"/>
-              <Field label="Description" value={animal.description} onChange={v=>setAnimal(a=>({...a,description:v}))} textarea placeholder="Brief description..."/>
-              <Field label="Feeding Guide" value={animal.feeding_guide} onChange={v=>setAnimal(a=>({...a,feeding_guide:v}))} textarea placeholder="What and how much to feed..."/>
-              <Field label="Housing Requirements" value={animal.housing_requirements} onChange={v=>setAnimal(a=>({...a,housing_requirements:v}))} textarea placeholder="Housing size, type, features..."/>
-              <Field label="Breeding Information" value={animal.breeding_info} onChange={v=>setAnimal(a=>({...a,breeding_info:v}))} textarea placeholder="Mating, gestation, weaning..."/>
-              <Field label="Market Information" value={animal.market_info} onChange={v=>setAnimal(a=>({...a,market_info:v}))} textarea placeholder="Price, markets, buyers..."/>
-              <Field label="Common Diseases (comma-separated)" value={animal.common_diseases} onChange={v=>setAnimal(a=>({...a,common_diseases:v}))} placeholder="ECF, Mastitis, Worms"/>
-              <button onClick={addAnimal} disabled={loading} className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
-                style={{ background:btnColors[tab], border:'1px solid rgba(255,255,255,0.2)' }}>
-                <Plus className="w-4 h-4"/>{loading?'Adding...':'Add Animal'}
+            <div className="p-3 rounded-xl mb-4" style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)' }}>
+              <div className="font-semibold text-white text-sm">{confirmDelete.name}</div>
+              <div className="text-xs text-white/45">{confirmDelete.email}</div>
+              {confirmDelete.county && <div className="text-xs text-white/30 mt-0.5">📍 {confirmDelete.county}</div>}
+            </div>
+            <p className="text-sm text-white/60 mb-5">
+              Are you sure you want to permanently delete this farmer account? All their data will be removed.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={()=>setConfirmDelete(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white/60 transition-all"
+                style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.1)' }}>
+                Cancel
+              </button>
+              <button onClick={()=>handleDeleteUser(confirmDelete)}
+                disabled={deleting===confirmDelete.id}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all flex items-center justify-center gap-2"
+                style={{ background:'rgba(239,68,68,0.8)', border:'1px solid rgba(239,68,68,0.5)' }}>
+                <Trash2 className="w-4 h-4"/>
+                {deleting===confirmDelete.id ? 'Deleting...' : 'Yes, Delete'}
               </button>
             </div>
-          )}
-
-          {tab==='diseases' && (
-            <div className="max-w-2xl space-y-4">
-              <h2 className="font-bold text-white flex items-center gap-2"><Plus className="w-4 h-4 text-red-400"/> Add New Disease</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Disease Name *" value={disease.name} onChange={v=>setDisease(d=>({...d,name:v}))} placeholder="e.g. Cassava Mosaic Virus"/>
-                <div><label className="block text-xs font-semibold text-white/50 mb-1.5">Type</label>
-                  <select value={disease.type} onChange={e=>setDisease(d=>({...d,type:e.target.value}))} style={inputStyle}>
-                    <option value="crop">Crop Disease</option>
-                    <option value="livestock">Livestock Disease</option>
-                  </select>
-                </div>
-                <Field label="Affects" value={disease.affects} onChange={v=>setDisease(d=>({...d,affects:v}))} placeholder="e.g. Cassava, Maize"/>
-                <div><label className="block text-xs font-semibold text-white/50 mb-1.5">Severity</label>
-                  <select value={disease.severity} onChange={e=>setDisease(d=>({...d,severity:e.target.value}))} style={inputStyle}>
-                    {['low','medium','high','critical'].map(o=><option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-              </div>
-              <Field label="Symptoms" value={disease.symptoms} onChange={v=>setDisease(d=>({...d,symptoms:v}))} textarea placeholder="List visible symptoms..."/>
-              <Field label="Causes" value={disease.causes} onChange={v=>setDisease(d=>({...d,causes:v}))} textarea placeholder="Pathogen, vector, conditions..."/>
-              <Field label="Treatment" value={disease.treatment} onChange={v=>setDisease(d=>({...d,treatment:v}))} textarea placeholder="Treatment with product names and doses..."/>
-              <Field label="Prevention" value={disease.prevention} onChange={v=>setDisease(d=>({...d,prevention:v}))} textarea placeholder="Prevention measures..."/>
-              <button onClick={addDisease} disabled={loading} className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
-                style={{ background:btnColors[tab], border:'1px solid rgba(255,255,255,0.2)' }}>
-                <Plus className="w-4 h-4"/>{loading?'Adding...':'Add Disease'}
-              </button>
-            </div>
-          )}
-
-          {tab==='users' && (
-            <div>
-              <h2 className="font-bold text-white mb-4">Registered Users ({users.length})</h2>
-              <div className="overflow-x-auto rounded-xl" style={{ border:'1px solid rgba(255,255,255,0.09)' }}>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.09)', background:'rgba(255,255,255,0.04)' }}>
-                      {['#','Name','Email','Role','County','Joined'].map(h=>(
-                        <th key={h} className="text-left text-xs font-bold text-white/40 uppercase py-3 px-4">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u,i)=>(
-                      <tr key={u.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.05)' }}
-                        onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,255,255,0.04)')}
-                        onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
-                        <td className="py-3 px-4 text-white/30 text-xs">{i+1}</td>
-                        <td className="py-3 px-4 font-semibold text-white">{u.name}</td>
-                        <td className="py-3 px-4 text-white/55">{u.email}</td>
-                        <td className="py-3 px-4">
-                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
-                            style={u.role==='admin'?{background:'rgba(251,191,36,0.2)',color:'#fbbf24',border:'1px solid rgba(251,191,36,0.3)'}:{background:'rgba(34,197,94,0.2)',color:'#4ade80',border:'1px solid rgba(34,197,94,0.3)'}}>
-                            {u.role}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-white/45">{u.county||'—'}</td>
-                        <td className="py-3 px-4 text-white/30 text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {users.length===0 && <div className="text-center py-10 text-white/30 text-sm">No users found.</div>}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
-      </G>
+      )}
     </div>
   )
 }
