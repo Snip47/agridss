@@ -18,15 +18,24 @@ You have deep knowledge of:
 - 18 livestock: dairy cattle (Friesian, Ayrshire), beef cattle (Boran), goats, sheep (Dorper), broilers, layers, Kienyeji chickens, turkeys, rabbits, pigs, fish, bees, camels, donkeys, ducks, quail, ostriches
 - All major Kenyan crop and livestock diseases with treatment using locally available products
 - Planting calendars (long rains March-May, short rains October-December)
-- Market prices and products available in Kenya: Dithane, Ridomil, Karate, Actara, DAP, CAN, Butalex
+- Market prices and products: Dithane, Ridomil, Karate, Actara, DAP, CAN, Butalex
 
-When analyzing photos or symptoms:
+When analyzing symptoms or photos:
 - Give clear diagnosis with confidence level
 - Recommend specific products available in Kenya with doses
 - Be concise and practical for smallholder farmers
-
 Respond in the same language as the farmer (English or Swahili)."""
 
+# Current working Groq models as of August 2026
+GROQ_MODELS = [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.6-27b",
+    "openai/gpt-oss-20b",
+    "llama-3.3-70b-versatile",
+    "llama3-70b-8192",
+    "llama3-8b-8192",
+    "gemma2-9b-it",
+]
 
 def get_gemini_url(model: str) -> str:
     key = GEMINI_API_KEY.strip()
@@ -80,9 +89,9 @@ async def analyze_image(req: ImageAnalysisReq, u: User = Depends(get_current_use
             pass
     if GROQ_API_KEY:
         prompt = (
-            f"A farmer uploaded a photo and asked: '{req.message or 'What is wrong with this crop or animal?'}'\n\n"
+            f"A farmer uploaded a photo and asked: '{req.message or 'What is wrong with this?'}'\n\n"
             "Since you cannot view the image, help by:\n"
-            "1. Asking them to describe what they see (colors, spots, wilting, lesions, swelling)\n"
+            "1. Asking them to describe symptoms (colors, spots, wilting, lesions, swelling)\n"
             "2. Listing the 5 most common Kenya crop/livestock diseases with visible symptoms\n"
             "3. Giving immediate first-aid advice\n"
             "Be practical for a Kenyan smallholder farmer."
@@ -143,7 +152,7 @@ async def _gemini_chat(message: str, history: list):
                 elif r.status_code in [400, 404]:
                     continue
                 else:
-                    raise HTTPException(500, f"Gemini error {r.status_code}")
+                    raise HTTPException(500, f"Gemini {r.status_code}: {r.text[:150]}")
         except HTTPException:
             raise
         except Exception as e:
@@ -156,15 +165,13 @@ async def _gemini_chat(message: str, history: list):
 
 
 async def _groq_chat(message: str, history: list):
-    # Try models in order — use whichever works
-    models = ["llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     for h in history[-10:]:
         messages.append({"role": h["role"], "content": h["content"]})
     messages.append({"role": "user", "content": message})
 
     last_error = ""
-    for model in models:
+    for model in GROQ_MODELS:
         try:
             async with httpx.AsyncClient(timeout=30) as client:
                 r = await client.post(
@@ -174,15 +181,11 @@ async def _groq_chat(message: str, history: list):
                 )
                 if r.status_code == 200:
                     return {"reply": r.json()["choices"][0]["message"]["content"], "provider": f"groq ({model})"}
-                elif r.status_code == 404 or "model_not_found" in r.text:
+                else:
                     last_error = r.text[:200]
                     continue
-                else:
-                    raise HTTPException(500, f"Groq error: {r.text[:200]}")
-        except HTTPException:
-            raise
         except Exception as e:
             last_error = str(e)
             continue
 
-    raise HTTPException(500, f"No working Groq model found. Last error: {last_error}")
+    raise HTTPException(500, f"All Groq models unavailable. Please use Gemini engine instead. Error: {last_error[:100]}")
