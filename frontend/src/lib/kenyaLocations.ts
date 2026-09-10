@@ -1,0 +1,388 @@
+export const KENYA_LOCATIONS: Record<string, Record<string, string[]>> = {
+  "Mombasa": {
+    "Changamwe": ["Changamwe","Kipevu","Airport","Miritini","Chaani"],
+    "Jomvu": ["Jomvu Kuu","Mikindani","Mjambere"],
+    "Kisauni": ["Mjibana","Bamburi","Mwakirunge","Mtopanga","Magogoni","Shanzu"],
+    "Nyali": ["Frere Town","Ziwa la Ng'ombe","Mkomani","Kongowea","Kadzandani"],
+    "Likoni": ["Mtongwe","Shika Adabu","Bofu","Likoni","Timbwani"],
+    "Mvita": ["Mji wa Kale","Tudor","Tononoka","Shimanzi","Majengo","Ganjoni"]
+  },
+  "Kwale": {
+    "Msambweni": ["Gombato Bongwe","Ukunda","Kinondo","Ramisi"],
+    "Lungalunga": ["Pongwe/Kikoneni","Dzombo","Mwereni","Vanga"],
+    "Matuga": ["Tsimba Golini","Waa","Tiwi","Kubo South","Mkongani"],
+    "Kinango": ["Ndavaya","Puma","Kinango","Mackinnon Road","Chengoni/Samburu","Mwavumbo","Kasemeni"]
+  },
+  "Kilifi": {
+    "Kilifi North": ["Tezo","Sokoni","Kibarani","Dabaso","Matsangoni","Watamu","Mnarani"],
+    "Kilifi South": ["Junju","Mwarakaya","Shimo la Tewa","Chasimba","Mtepeni"],
+    "Kaloleni": ["Mariakani","Kayafungo","Kaloleni","Mwanamwinga"],
+    "Rabai": ["Mwawesa","Ruruma","Kambe/Ribe","Rabai/Kisurutini"],
+    "Ganze": ["Ganze","Bamba","Jaribuni","Sokoke"],
+    "Malindi": ["Jilore","Kakuyuni","Ganda","Malindi Town","Shella"],
+    "Magarini": ["Marafa","Magarini","Adu","Garashi","Sabaki"]
+  },
+  "Tana River": {
+    "Garsen": ["Garsen South","Garsen Central","Garsen North","Garsen West","Wayu"],
+    "Galole": ["Wayu","Hirimani","Chewani","Mikinduni","Kinakomba"],
+    "Bura": ["Chewele","Tana North","Sala","Madogo"]
+  },
+  "Lamu": {
+    "Lamu East": ["Faza","Kiunga","Basuba"],
+    "Lamu West": ["Shela","Mkomani","Hindi","Mkunumbi","Hongwe","Witu","Bahari"]
+  },
+  "Taita-Taveta": {
+    "Taveta": ["Mahoo","Bombolulu","Tsimba/Golini","Taveta"],
+    "Wundanyi": ["Wumingu/Kishushe","Wundanyi/Mbale","Mwanda","Ronge"],
+    "Mwatate": ["Rong'e","Mwatate","Bura","Chawia","Wusi/Kishamba"],
+    "Voi": ["Mbololo","Sagala","Kaloleni","Marungu","Ngolia","Voi"]
+  },
+  "Garissa": {
+    "Garissa Township": ["Waberi","Township","Galbet","Somalia","Iftin"],
+    "Balambala": ["Balambala","Danyere","Jarajila","Goreale","Mbalambala"],
+    "Lagdera": ["Modogashe","Benane","Goreale","Maalim","Baraki"],
+    "Dadaab": ["Dertu","Dadaab","Labasigale","Damajale","Liboi"],
+    "Fafi": ["Bura","Nanighi","Jarajila","Fafi","Bangal"],
+    "Ijara": ["Hulugho","Ijara","Masalani","Sangailu"]
+  },
+  "Wajir": {
+    "Wajir North": ["Gurar","Bute","Ussan","Dambala Fachana","Gank/Malkagufu"],
+    "Wajir East": ["Wajir Town","Barwago","Khorof/Harar"],
+    "Tarbaj": ["Tarbaj","Wargadud","Kutulo","Hadado/Athibohol"],
+    "Wajir West": ["Griftu","Wagberi","Township","Ureyen"],
+    "Eldas": ["Eldas","Della","Muddo Erri","Lakoley South"],
+    "Wajir South": ["Benane","Ganyure/Wagalla","Sarman","Habaswein","Lagboghol South"]
+  },
+  "Mandera": {
+    "Mandera West": ["Kiliwehiri","Neboi","Ganda","Lagsure","Dandu","Kalacha"],
+    "Banissa": ["Banissa","Derkhale","Malkamari","Da Harte","Gari"],
+    "Mandera North": ["Ashabito","Guticha","Morothile","Rhamu","Rhamu Dimtu"],
+    "Mandera South": ["Wargadud","Kutulo","Elwak North","Elwak South","Shimbir Fatuma"],
+    "Mandera East": ["Bulla Mpya","Kipsas","Hareri","Mandera Town","Neboi"],
+    "Lafey": ["Lafey","Fino","Qoqay","El Golicha","Sala"]
+  },
+  "Marsabit": {
+    "Moyale": ["Moyale Township","Kenya Moyale","Butiye","Sololo"],
+    "North Horr": ["Illeret","North Horr","Dukana","Maikona","Turbi"],
+    "Saku": ["Marsabit Central","Karare","Marsabit North"],
+    "Laisamis": ["Laisamis","Logologo","Kargi","Loiyangalani","Korr"]
+  },
+  "Isiolo": {
+    "Isiolo North": ["Waberi","Bulla Pesa","Burat","Old Town","Ngare Mara","Cherab"],
+    "Isiolo South": ["Garbatulla","Kinna","Sericho"]
+  },
+  "Meru": {
+    "Igembe South": ["Ntunene","Antubochiu","Akachiu","Kanuni"],
+    "Igembe Central": ["Njia","Maua","Kiegoi/Antubochiu","Akachiu"],
+    "Igembe North": ["Amento","Abothuguchi West","Abothuguchi Central","Kanuni"],
+    "Tigania West": ["Athiru Gaiti","Akithi","Karama","Athiru Ruujine","Timau"],
+    "Tigania East": ["Mbeu","Thangatha","Mikinduri","Kianjai","Nkomo"],
+    "North Imenti": ["Municipality","Ntima East","Ntima West","Nyaki West","Nyaki East"],
+    "Buuri": ["Timau","Kisima","Ruiri/Rwarera","Muthara","Kiirua/Naari"],
+    "Central Imenti": ["Mwanganthia","Abothuguchi West","Ntima West","Nturiri"],
+    "South Imenti": ["Mitunguu","Igoji East","Igoji West","Nkuene","Mwimbi","Kibirichia"]
+  },
+  "Tharaka-Nithi": {
+    "Maara": ["Githuri","Nthangathi","Nkondi","Mariani","Ganga","Chogoria"],
+    "Chuka/Igambang'ombe": ["Karingani","Magumoni","Mugwe","Igamba Ng'ombe"],
+    "Tharaka North": ["Tharaka","Tharaka South","Nkondi"]
+  },
+  "Embu": {
+    "Manyatta": ["Nginda","Mbeti North","Kirimari","Mutuobare","Rugby","Kamiu","Nembure"],
+    "Runyenjes": ["Gaturi North","Gaturi South","Central","Kyeni North","Kyeni South"],
+    "Mbeere South": ["Mwea","Makima","Mbeti South","Mavuria","Kiambere"],
+    "Mbeere North": ["Evurore","Kiritiri","Kiambere","Mavuria","Mbeti North"]
+  },
+  "Kitui": {
+    "Mwingi North": ["Ngomeni","Kyuso","Mumoni","Tseikuru","Tharaka"],
+    "Mwingi West": ["Kivou","Nguni","Nuu","Mui","Waita"],
+    "Mwingi Central": ["Mwingi Central","Kyome/Thaana","Nguutani","Migwani","Kiomo/Kyethani"],
+    "Kitui West": ["Mutonguni","Kauwi","Matinyani","Kwa Mutonga/Kithumba"],
+    "Kitui Rural": ["Kisasi","Mbitini","Kwavonza/Yatta","Kanyangi"],
+    "Kitui Central": ["Miambani","Township","Kyangwithya West","Mulango"],
+    "Kitui East": ["Zombe/Mwitika","Nzambani","Voo/Kyamatu","Endau/Malalani","Mutito/Kaliku"],
+    "Kitui South": ["Ikanga/Kyatune","Mutomo","Mumandu/Mutha","Kanziku","Ngomeni"]
+  },
+  "Machakos": {
+    "Masinga": ["Masinga Central","Ekalakala","Muthesya","Ndalani","Kivaa"],
+    "Yatta": ["Township","Ndalani","Matuu","Kithimani","Ikombe","Katangi"],
+    "Kangundo": ["Kangundo North","Kangundo Central","Kangundo East","Kangundo West"],
+    "Matungulu": ["Matungulu North","Matungulu West","Matungulu East","Kyeleni"],
+    "Kathiani": ["Mitaboni","Kathiani Central","Lower Kaewa/Kaani","Upper Kaewa"],
+    "Mavoko": ["Athi River","Kinanie","Muthwani","Syokimau/Mulolongo"],
+    "Machakos Town": ["Machakos Township","Mutituni","Mumbuni North","Muvuti","Kalama","Mua"],
+    "Mwala": ["Mbiuni","Makaveti/Nzaui","Kibauni","Nguluni","Wamunyu"]
+  },
+  "Makueni": {
+    "Mbooni": ["Tulimani","Mbooni","Kithungo/Kitundu","Kisau/Kiteta","Waia/Kako"],
+    "Kilome": ["Kasikeu","Mukaa","Kiima Kimwe","Kalamba"],
+    "Kaiti": ["Kaiti","Ukia","Kee","Kilungu","Ilima"],
+    "Makueni": ["Wote","Muvau/Kikumo","Mavindini","Kathonzweni"],
+    "Kibwezi West": ["Makindu","Nguumo","Kikumbulyu North","Kikumbulyu South","Nguu/Masumba"],
+    "Kibwezi East": ["Emali/Mulala","Mukaa","Mavindini","Nzaui","Kalamba"]
+  },
+  "Nyandarua": {
+    "Kinangop": ["Engineer","Gathara","North Kinangop","Murungaru","Nyakio","Gathanga"],
+    "Kipipiri": ["Geta","Githioro","Kipipiri","Wanjohi"],
+    "Ol Kalou": ["Karau","Kanjuiri Range","Mirangine","Kaimbaga","Rurii"],
+    "Ol Joro Orok": ["Gathanji","Gatimu","Weru","Charagita"],
+    "Ndaragwa": ["Leshau","Pondo","Shamata","Ndaragwa","The Mwea"]
+  },
+  "Nyeri": {
+    "Tetu": ["Dedan Kimathi","Wamagana","Aguthi-Gaaki"],
+    "Kieni": ["Mweiga","Naromoru/Kiamathaga","Mwiyogo/Endarasha","Mugunda","Gatarakwa","Thegu River","Kabaru","Gakawa"],
+    "Mathira": ["Ruguru","Kaiyaba","Konyu","Chinga","Mahiga","Iria-ini"],
+    "Othaya": ["Amboni","Murarandia","Gatugi","Iria-ini","Karima"],
+    "Mukurweini": ["Rugi","Mukurweini West","Mukurweini East","Gikondi"],
+    "Nyeri Town": ["Rware","Kamakwa/Mukaro","Gatitu/Muruguru","Ruring'u","Kiganjo/Mathari"]
+  },
+  "Kirinyaga": {
+    "Mwea": ["Mutithi","Kangai","Wamumu","Nyangati","Murinduko","Gathigiriri"],
+    "Gichugu": ["Kabare","Baragwi","Mutira","Kanyekiini"],
+    "Ndia": ["Gichugu","Mutira","Mwea","Ngushishi"],
+    "Kirinyaga Central": ["Kutus","Kanyekiini","Kerugoya","Inoi"]
+  },
+  "Murang'a": {
+    "Kangema": ["Kanyenya-Ini","Muguru","Rwathia"],
+    "Mathioya": ["Gitugi","Kamacharia","Kiru"],
+    "Kiharu": ["Wangu","Mugoiri","Mbiri","Township","Murarandia","Gaturi"],
+    "Kigumo": ["Kahumbu","Muthithi","Kigumo","Kangari"],
+    "Maragwa": ["Kimorori/Mwangi","Makuyu","Kambiti","Karangai","Township","Ichagaki"],
+    "Kandara": ["Ng'araria","Muruka","Kagundu-Ini","Gaichanjiru","Ithiru","Ruchu"],
+    "Gatanga": ["Ithanga","Kakuzi/Mitubiri","Mugumo-Ini","Township","Kirwara","Kathangariri"]
+  },
+  "Kiambu": {
+    "Gatundu South": ["Kiganjo","Ndarugu","Ngenda","Kageche"],
+    "Gatundu North": ["Gachoka","Chania","Kakuzi","Gitirioni"],
+    "Juja": ["Murera","Theta","Juja","Witeithie","Kalimoni"],
+    "Thika Town": ["Township","Kamenu","Hospital","Gatuanyaga","Ngoliba"],
+    "Ruiru": ["Gitothua","Biashara","Gatongora","Kahawa Sukari","Kahawa Wendani","Kiuu","Mwiki","Mwihoko"],
+    "Githunguri": ["Githunguri","Githiga","Ikinu","Ngewa","Komothai"],
+    "Kiambu": ["Kiambu Township","Ting'ang'a","Ndenderu","Muchatha","Kihara"],
+    "Kiambaa": ["Cianda","Karuri","Ndumberi","Tinganga"],
+    "Kabete": ["Gitaru","Muguga","Naivasha Road","Kabete","Nyathuna"],
+    "Kikuyu": ["Karai","Muguga","Nachu","Ondiri","Kikuyu","Kinoo"],
+    "Limuru": ["Bibirioni","Limuru Central","Ndeiya","Limuru East","Ngecha/Tigoni"],
+    "Lari": ["Kirenga","Nyamweru","Miharati","Lari/Kirenga","Kinale"]
+  },
+  "Turkana": {
+    "Turkana North": ["Kaeris","Lake Zone","Lapur","Nawokote","Kawalase"],
+    "Turkana West": ["Kakuma","Lokichoggio","Nanaam","Kalobeyei"],
+    "Turkana Central": ["Kerio Delta","Lodwar Township","Kanamkemer","Lobei","Moroto","Lorugum"],
+    "Loima": ["Kotaruk/Lobei","Turkwel","Loima","Lokiriama/Lorengippi"],
+    "Turkana South": ["Kaaleng/Kalapata","Turkana South","Kerio Delta"],
+    "Turkana East": ["Kibish","Lapur","Kapedo/Napeitom","Lomelo"]
+  },
+  "West Pokot": {
+    "Kapenguria": ["Sook","Kapenguria","Mnagei","Riwo","Siyoi"],
+    "Sigor": ["Batei","Lomut","Weiwei","Sekerr"],
+    "Kacheliba": ["Kodich","Kacheliba","Kasei","Kapchok","Kiwawa"],
+    "Pokot South": ["Chesegon","Seretion","Masool","Lelan","Tapach"]
+  },
+  "Samburu": {
+    "Samburu West": ["Lodokejek","Suguta Marmar","Maralal","Loosuk","Poro"],
+    "Samburu North": ["El-Barta","Nyiro","Nachola","Ndoto","Angata Nanyokie"],
+    "Samburu East": ["Waso","Archer's Post","Merti","Garba Tulla"]
+  },
+  "Trans Nzoia": {
+    "Kwanza": ["Kwanza","Keiyo","Bidii","Matisi"],
+    "Endebess": ["Endebess","Chepchoina","Matumbei"],
+    "Saboti": ["Saboti","Matisi","Kipsiro","Nabiswa"],
+    "Kiminini": ["Kiminini","Sikhendu","North Kiminini","Waitaluk"],
+    "Cherangany": ["Sinyerere","Makutano","Kaplamai","Motosiet","Cherangany/Suwerwa","Ziwa"]
+  },
+  "Uasin Gishu": {
+    "Soy": ["Ziwa","Soy","Moi's Bridge","Karuna/Meibeki"],
+    "Turbo": ["Turbo","Kamutiong","Ngenyilel","Tapsagoi","Huruma"],
+    "Moiben": ["Tembelio","Sergoit","Karuna/Meibeki","Moiben","Kuinet/Kapsuswa"],
+    "Ainabkoi": ["Ainabkoi","Kapsoya","Kimumu"],
+    "Kapseret": ["Megun","Langas","Racecourse","Kipkenyo","Ngeria","Simat/Kapseret"],
+    "Kesses": ["Tarakwa","Ngenyilel","Megun","Kesses"]
+  },
+  "Elgeyo-Marakwet": {
+    "Marakwet East": ["Lelan","Soy North","Moiben/Kuserwo","Embobut/Embulot"],
+    "Marakwet West": ["Arror","Cherangany","Lelan","Tot"],
+    "Keiyo North": ["Emsoo","Kamariny","Kaptarakwa","Tambach"],
+    "Keiyo South": ["Chepkorio","Soy South","Kaptarakwa","Metkei"]
+  },
+  "Nandi": {
+    "Tinderet": ["Tinderet","Chemelil/Chemase","Kapsimotwo","Cheptabu"],
+    "Aldai": ["Kabwareng","Terik","Kemeloi-Maraba","Kobujoi","Kaptumo-Kaboi"],
+    "Nandi Hills": ["Nandi Hills","Chepkunyuk","OI Lessos","Kabiyet"],
+    "Chesumei": ["Chemundu/Kapng'etuny","Koyo-Ndurio","Ngechek","Chepkumia","Kapsabet"],
+    "Emgwen": ["Kapsabet","Nandi Hills","Chepterit","Kosirai"],
+    "Mosop": ["Kabisaga","Kutus","Kabiyet","Ndalat","Maraba/Kaptumo"]
+  },
+  "Baringo": {
+    "Tiaty": ["Tirioko","Kolowa","Ribkwo","Silale","Loiyamorok","Churo/Amaya"],
+    "Baringo North": ["Barwessa","Kabartonjo","Saimo/Kipsaraman","Saimo Soi"],
+    "Baringo Central": ["Kabining","Tenges","Ewalel/Chapchap","Kabarnet","Tambach","Salawa"],
+    "Baringo South": ["Mukuyuni","Marigat","Ilchamus","Mochongoi"],
+    "Mogotio": ["Mogotio","Emining","Koibatek"],
+    "Eldama Ravine": ["Eldama Ravine","Ravine","Koibatek","Maji Mazuri"]
+  },
+  "Laikipia": {
+    "Laikipia West": ["OI Moran","Marmanet","Githiga","Igwamiti","Salama"],
+    "Laikipia East": ["Ngobit","Tigithi","Thingithu","Nanyuki","Majwe"],
+    "Laikipia North": ["Sosian","Segera","Mukogodo East","Mukogodo West"]
+  },
+  "Nakuru": {
+    "Molo": ["Molo","Turi","Mariashoni","Elburgon","Keringet"],
+    "Njoro": ["Njoro","Mau Narok","Mauche","Kihingo"],
+    "Naivasha": ["Naivasha East","Viwandani","Hells Gate","Lake View","Mai Mahiu","Naivasha","Biashara"],
+    "Gilgil": ["Gilgil","Elementaita","Mbaruk/Eburu","Malewa West","Murindati"],
+    "Kuresoi South": ["Amalo","Keringet","Kiptagich","Tinet"],
+    "Kuresoi North": ["Kiptororo","Nyota","Sirikwa","Kamara"],
+    "Subukia": ["Subukia","Waseges","Kabazi"],
+    "Rongai": ["Menengai West","Visoi","Mosop","Solai","Lanet/Umoja"],
+    "Bahati": ["Bahati","Dundori","Kabazi","Lanet/Umoja"],
+    "Nakuru Town West": ["Barut","London","Nakuru East","Biashara","Kivumbini","Flamingo"],
+    "Nakuru Town East": ["Biashara","Kivumbini","Flamingo","Menengai","Hospital"]
+  },
+  "Narok": {
+    "Kilgoris": ["Kipkelion","Nkineji","Keyian","Angata Barikoi","Shankoe/Kuria East"],
+    "Emurua Dikirr": ["Emurua Dikirr","Kimintet","Ilkisonko","Ntulele"],
+    "Narok North": ["Olposimoru","Olokurto","Narok Town","Nkareta","Olorropil","Melelo"],
+    "Narok East": ["Mosiro","Ildamat","Keekonyokie","Suswa"],
+    "Narok South": ["Narok South","Loita","Maji Moto/Naroosura","Olkeri","Naikara"],
+    "Narok West": ["Ilkerin","Ololmasani","Mogondo","Kapsasian"]
+  },
+  "Kajiado": {
+    "Kajiado North": ["Purko","Ongata Rongai","Nkaimurunya","Oloolua","Ngong"],
+    "Kajiado Central": ["Olmotiaki/Mbirikani","Kuku","Entonet/Lenkisim","Keekonyokie","Imaroro"],
+    "Kajiado East": ["Kaputiei North","Kitengela","Oloosirkon/Sholinke","Kenyawa/Poka","Iloshaiki"],
+    "Kajiado West": ["Keekonyokie","Iloodokilani","Magadi","Ewuaso Oonkidong'i","Mosiro"],
+    "Kajiado South": ["Loitokitok","Rombo","Mbirikani/Eselenkei","Kuku","Kimana"]
+  },
+  "Kericho": {
+    "Kipkelion East": ["Chepseon","Tendeno/Sorget","Kunyak","Kamasian","Kipkelion"],
+    "Kipkelion West": ["Soin","Kedowa/Kimugul","Chaik","Kipkelion","Tilil"],
+    "Ainamoi": ["Ainamoi","Kapkugerwet","Kipchebor","Kapsaos","Kapsabet"],
+    "Bureti": ["Kisiara","Tebesonik","Cheboin","Litein","Cheplanget"],
+    "Belgut": ["Kabianga","Cheptarit","Waldai","Sigowet"],
+    "Sigowet/Soin": ["Sigowet","Fort Ternan","Soin","Kabianga"]
+  },
+  "Bomet": {
+    "Sotik": ["Ndanai/Abosi","Chemagel","Embomos","Mutarakwa","Sigor/Bom"],
+    "Chepalungu": ["Sigor","Kongasis","Ndaraweta","Mutarakwa"],
+    "Bomet East": ["Merigi","Kembu","Township","Longisa","Kipreres"],
+    "Bomet Central": ["Silibwet Township","Ndaraweta","Merigi","Kembu"],
+    "Konoin": ["Mogogosiek","Chepchabas","Biolet","Sigor","Kimulot"]
+  },
+  "Kakamega": {
+    "Lugari": ["Lugari","Lumakanda","Mautuma","Shirugu-Mugai"],
+    "Likuyani": ["Sango","Nzoia","Kongoni","Likuyani"],
+    "Malava": ["Central Malava","Chemuche","East Kabras","Kabras","Butali/Chegulo","West Kabras"],
+    "Lurambi": ["Sheywe","Butsotso East","Butsotso South","Butsotso Central","Shirere","Mahiakalo"],
+    "Navakholo": ["Ingostse-Mathia","Shinoyi-Shikomari-Esumeyia","Bunyala West","Bunyala Central"],
+    "Mumias West": ["Mumias Central","Mumias North","Lihanda","Mumias East"],
+    "Mumias East": ["Koyonzo","Chesumei","Mumias East","Shianda"],
+    "Matungu": ["Kholera","Shirugu","Bunyala North","East Wanga","Khalaba"],
+    "Butere": ["Marama West","Marama Central","Marama North","Marama East","South Wanga"],
+    "Khwisero": ["East Bunyala","Bunyala North","West Bunyala"],
+    "Shinyalu": ["Shibuye","Idakho Central","Idakho East","Idakho North","Idakho South"],
+    "Ikolomani": ["Idakho East","Idakho West","Idakho North","Idakho South"]
+  },
+  "Vihiga": {
+    "Vihiga": ["Vihiga","Lugaga-Wamuluma","Central Maragoli","South Maragoli","Luanda"],
+    "Sabatia": ["Sabatia","West Sabatia","Chavakali","North Maragoli","Wodanga","Busali"],
+    "Hamisi": ["Shiru","Gisambai","Shamakhokho","Banja","Muhudu","Tambua","Jepkoyai"],
+    "Luanda": ["North East Bunyore","Central Bunyore","West Bunyore"],
+    "Emuhaya": ["North East Bunyore","Central Bunyore","West Bunyore","Emuhaya"]
+  },
+  "Bungoma": {
+    "Mount Elgon": ["Cheptais","Chesikaki","Chepyuk","Kopsiro","Kapkateny","Kaptama","Elgon"],
+    "Sirisia": ["Namwela","Malakisi/South Kulisiru","Lwandanyi"],
+    "Kabuchai": ["Kabuchai/Chwele","West Nalondo","Bwake/Luuya","Mukuyuni"],
+    "Bumula": ["South Bukusu","Khasoko","Kabula","Mukhola","Migosi","Bukokholo"],
+    "Kanduyi": ["Bukembe West","Bukembe East","Township","Khalaba","Musikoma","East Sangalo","Central Sangalo"],
+    "Webuye East": ["Webuye East"],
+    "Webuye West": ["Maraka","Mihuu","Ndivisi","Matulo"],
+    "Kimilili": ["Kimilili","Kamukuywa","Kibingei","Sikhendu","South Kimilili"],
+    "Tongaren": ["Mbakalo","Naitiri/Kabuyefwe","Milima","Ndalu/Tabani","Tongaren","Muchorwe"]
+  },
+  "Busia": {
+    "Teso North": ["Malaba Central","Malaba North","Ang'urai North","Ang'urai South","Malaba South"],
+    "Teso South": ["Amukura West","Amukura Central","Amukura East","Chakol South","Chakol North"],
+    "Nambale": ["Nambale Township","Bukhayo North/Walatsi","Bukhayo East","Bukhayo Central"],
+    "Matayos": ["South Alego","Bukhayo West/Nalondo","Burumba","Mayenje","Busibwabo"],
+    "Butula": ["Butula","Marachi East","Marachi Central","Marachi North","Marachi West","West Bunyala"],
+    "Funyula": ["Namboboto Nambuku","Nangina","Ageng'a Nanguba","Funyula","Moding"],
+    "Budalangi": ["Budala","Port Victoria","Bulemia","Bunyala North","Bunyala South","Bumbe"]
+  },
+  "Siaya": {
+    "Ugenya": ["East Ugenya","Ukwala","North Ugenya","West Ugenya"],
+    "Ugunja": ["Ugunja","Sigomere","West Alego"],
+    "Alego Usonga": ["North Alego","Siaya Township","Kaloka","Usonga","West Alego"],
+    "Gem": ["North Gem","Yala Township","Central Gem","Sidenya","East Gem","West Gem"],
+    "Bondo": ["Usigu","Central Sakwa","West Sakwa","South Sakwa","Nyang'oma","Rarieda"],
+    "Rarieda": ["West Yimbo","Central Sakwa","East Yimbo","Sagam","Rarieda","Langata"]
+  },
+  "Kisumu": {
+    "Kisumu East": ["Manyatta A","Kolwa East","Manyatta B","Nyalenda A","Kolwa Central"],
+    "Kisumu West": ["South West Kisumu","Central Kisumu","Kisumu North","Shaurimoyo Kaloleni","Market Milimani"],
+    "Kisumu Central": ["Railways Migosi","Market Milimani","Shaurimoyo Kaloleni","Central Kisumu"],
+    "Seme": ["Central Seme","East Seme","North Seme","West Seme"],
+    "Nyando": ["Awasi/Onjiko","Ahero","Kabonyo/Kanyagwal","Kobura"],
+    "Muhoroni": ["Miwani","Ombeyi","Masogo/Nyang'oma","Chemelil/Chemase","Muhoroni/Koru"],
+    "Nyakach": ["Southern Central Nyakach","West Nyakach","North East Nyakach","Nyakach Central","South Nyakach"]
+  },
+  "Homa Bay": {
+    "Kasipul": ["West Karachuonyo","Central Karachuonyo","North Karachuonyo","Kasipul"],
+    "Kabondo Kasipul": ["Kabondo East","Kokwanyo/Kakelo","Kojwach","Kabondo West"],
+    "Karachuonyo": ["North Karachuonyo","Central Karachuonyo","West Karachuonyo","East Karachuonyo"],
+    "Rangwe": ["East Gem","West Gem","Central Gem","Kagan"],
+    "Homa Bay Town": ["Homa Bay Central","Homa Bay Arujo","Homa Bay East","Homa Bay West"],
+    "Ndhiwa": ["Kwabwai","Kanyadoto","Kanyikela","Kabuoch North","Kabuoch South/Pala","Kanyamwa Kologi","Kanyamwa Kosewe"],
+    "Mbita": ["Rusinga Island","Mfangano Island","Mbita","Suba North","Gwassi North","Gwassi South","Kaksingri West"],
+    "Suba South": ["Gwassi South","Kasgunga","Lambwe","Gembe"]
+  },
+  "Migori": {
+    "Rongo": ["North Kadem","Macalder/Kanyarwanda","Kaugagi","Central Kadem","Wasare"],
+    "Awendo": ["North Sakwa","South Sakwa","West Sakwa","Central Sakwa"],
+    "Suna East": ["God Jope","Suna Central","Kakrao","Kwa"],
+    "Suna West": ["Wiga","Wagwe","Muhuru"],
+    "Uriri": ["West Kanyamkago","North Kanyamkago","Central Kanyamkago","East Kanyamkago","South Kanyamkago"],
+    "Nyatike": ["Kachieng","Kanyasa","North Kadem","Macalder/Kanyarwanda","Wasare","God Jope"],
+    "Kuria West": ["Masaba","Bokoli","Nyamosense/Komosoko","Kegonga","Ntimaru West"],
+    "Kuria East": ["Bukira East","Bukira Central/Ikerege","Isibania","Mabera","Tagare"]
+  },
+  "Kisii": {
+    "Bonchari": ["Boochi/Tendere","Riana","Bonchari","South Mugirango","Charity"],
+    "South Mugirango": ["Boochi/Tendere","Nyacheki","Bogetenga","Boitang'i","Gesima"],
+    "Bomachoge Borabu": ["Gesiaga","Magombo","Bomwagamo","Bokimai","Metembe"],
+    "Bobasi": ["Masige West","Masige East","Basi Central","Nyacheki","Moticho","Gombao/Mpira"],
+    "Bomachoge Chache": ["Majoge Borabu","Magenche","Gesima","Bombaba Borabu"],
+    "Nyaribari Masaba": ["Iranda","Gesusu","Kiamokama","Bosamaro","Bomorenda"],
+    "Nyaribari Chache": ["Ichuni","Nyatieko","Boikang'a","Mwembe Tayari","Kisii Central"],
+    "Kitutu Chache North": ["Kegogi","Marani","Kitutu Central","Rianyena","Keumbu"],
+    "Kitutu Chache South": ["Keumbu","Kiogoro","Birongo","Ibeno","Kitutu Central"]
+  },
+  "Nyamira": {
+    "Kitutu Masaba": ["Gesima","Nyamira North","Township","Bosamaro","West Mugirango"],
+    "West Mugirango": ["Omobera","Magwagwa","Ekerenyo","Metembe"],
+    "North Mugirango": ["Bogichora","Bogiakumu","Boriamata","Magwagwa"],
+    "Borabu": ["Menchari","Esise","Nyamira","Nyansiongo"]
+  },
+  "Nairobi": {
+    "Westlands": ["Kitisuru","Parklands/Highridge","Karura","Kangemi","Mountain View"],
+    "Dagoretti North": ["Kilimani","Kawangware","Gatina","Kileleshwa","Kabiro"],
+    "Dagoretti South": ["Mutu-ini","Ngando","Riruta","Uthiru/Ruthimitu","Waithaka"],
+    "Langata": ["Karen","Nairobi West","Mugumoini","South C","Nyayo Highrise"],
+    "Kibra": ["Laini Saba","Lindi","Makina","Woodley/Kenyatta Golf Course","Sarang'ombe"],
+    "Roysambu": ["Githurai","Kahawa West","Zimmerman","Roysambu","Kahawa"],
+    "Kasarani": ["Clay City","Mwiki","Kasarani","Njiru","Ruai"],
+    "Ruaraka": ["Baba Dogo","Utalii","Mathare North","Lucky Summer","Korogocho"],
+    "Embakasi South": ["Imara Daima","Kwa Njenga","Kwa Reuben","Pipeline","Kware"],
+    "Embakasi North": ["Kariobangi North","Dandora Area I","Dandora Area II","Dandora Area III","Dandora Area IV"],
+    "Embakasi Central": ["Kayole North","Kayole Central","Kayole South","Komarock","Matopeni/Spring Valley"],
+    "Embakasi East": ["Upper Savannah","Lower Savannah","Embakasi","Utawala","Mihango"],
+    "Embakasi West": ["Umoja I","Umoja II","Mowlem","Kariobangi South"],
+    "Makadara": ["Maringo/Hamza","Viwandani","Harambee","Makongeni"],
+    "Kamukunji": ["Pumwani","Eastleigh North","Eastleigh South","Airbase","California"],
+    "Starehe": ["Nairobi Central","Ngara","Pangani","Ziwani/Kariokor","Landimawe","Nairobi South"],
+    "Mathare": ["Hospital","Mabatini","Huruma","Mji wa Huruma","Ngei","Mlango Kubwa","Kiamaiko"]
+  }
+}
+
+export const COUNTY_NAMES = Object.keys(KENYA_LOCATIONS).sort()

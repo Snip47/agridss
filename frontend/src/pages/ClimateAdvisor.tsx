@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import api from '../lib/api'
-import { useAuth } from '../lib/auth'
 import { Link } from 'react-router-dom'
 import { MapPin, ChevronRight, AlertTriangle } from 'lucide-react'
+import { KENYA_LOCATIONS, COUNTY_NAMES } from '../lib/kenyaLocations'
 
 interface AnalysisResult {
   county:string; constituency:string; zone:string; zone_name:string
@@ -12,16 +12,6 @@ interface AnalysisResult {
   recommended_crops:any[]; recommended_livestock:any[]
   description:string
 }
-
-const KENYA_COUNTIES = [
-  "Mombasa","Kwale","Kilifi","Tana River","Lamu","Taita-Taveta",
-  "Garissa","Wajir","Mandera","Marsabit","Isiolo","Meru","Tharaka-Nithi",
-  "Embu","Kitui","Machakos","Makueni","Nyandarua","Nyeri","Kirinyaga",
-  "Murang'a","Kiambu","Turkana","West Pokot","Samburu","Trans Nzoia",
-  "Uasin Gishu","Elgeyo-Marakwet","Nandi","Baringo","Laikipia","Nakuru",
-  "Narok","Kajiado","Kericho","Bomet","Kakamega","Vihiga","Bungoma",
-  "Busia","Siaya","Kisumu","Homa Bay","Migori","Kisii","Nyamira","Nairobi"
-]
 
 const G = ({ children, className='' }: { children:React.ReactNode; className?:string }) => (
   <div className={className} style={{ background:'rgba(0,0,0,0.38)', backdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:'1rem' }}>{children}</div>
@@ -33,9 +23,6 @@ const CAT_EMOJI:Record<string,string> = { cereal:'🌾',legume:'🫘',vegetable:
 const ANIMAL_EMOJI:Record<string,string> = { cattle:'🐄',goat:'🐐',sheep:'🐑',poultry:'🐔',rabbit:'🐇',pig:'🐷',fish:'🐟',bees:'🐝',camel:'🐪',donkey:'🫏',duck:'🦆',quail:'🐦',ostrich:'🦜' }
 
 export default function ClimateAdvisor() {
-  const { user } = useAuth()
-  const [constituencies, setConstituencies] = useState<string[]>([])
-  const [wards, setWards] = useState<string[]>([])
   const [county, setCounty] = useState('')
   const [constituency, setConstituency] = useState('')
   const [ward, setWard] = useState('')
@@ -43,37 +30,34 @@ export default function ClimateAdvisor() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Pre-fill from user profile
-  useEffect(() => {
-    if (user?.county) setCounty(user.county)
-    if ((user as any)?.constituency) setConstituency((user as any).constituency)
-  }, [user])
+  // Get constituencies for selected county directly from local data
+  const constituencies = county && KENYA_LOCATIONS[county]
+    ? Object.keys(KENYA_LOCATIONS[county]).sort()
+    : []
 
-  // Load constituencies when county changes
-  useEffect(() => {
-    if (!county) { setConstituencies([]); setWards([]); return }
-    setConstituency(''); setWard(''); setConstituencies([]); setWards([])
-    api.get('/location/constituencies', { params:{ county } }).then(r => {
-      const data = r.data
-      if (Array.isArray(data)) setConstituencies(data)
-      else if (typeof data === 'object' && data !== null) setConstituencies(Object.keys(data))
-    }).catch(() => {})
-  }, [county])
+  // Get wards for selected constituency directly from local data
+  const wards = county && constituency && KENYA_LOCATIONS[county]?.[constituency]
+    ? [...KENYA_LOCATIONS[county][constituency]].sort()
+    : []
 
-  // Load wards when constituency changes
-  useEffect(() => {
-    if (!county || !constituency) { setWards([]); return }
-    setWard(''); setWards([])
-    api.get('/location/wards', { params:{ county, constituency } }).then(r => {
-      if (Array.isArray(r.data)) setWards(r.data)
-    }).catch(() => {})
-  }, [constituency])
+  const handleCountyChange = (val: string) => {
+    setCounty(val)
+    setConstituency('')
+    setWard('')
+    setResult(null)
+    setError('')
+  }
+
+  const handleConstituencyChange = (val: string) => {
+    setConstituency(val)
+    setWard('')
+  }
 
   const analyze = async () => {
     if (!county) { setError('Please select a county first'); return }
     setError(''); setLoading(true); setResult(null)
     try {
-      const r = await api.get('/climate/analyze', { params:{ county, constituency } })
+      const r = await api.get('/climate/analyze', { params: { county, constituency } })
       setResult(r.data)
     } catch (e:any) {
       setError(e?.response?.data?.detail || 'Analysis failed. Please try again.')
@@ -100,33 +84,44 @@ export default function ClimateAdvisor() {
           <span className="font-bold text-white text-sm">Select Your Location</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          {/* County */}
           <div>
             <label className="block text-xs text-white/45 mb-1.5">County *</label>
-            <select value={county} onChange={e=>setCounty(e.target.value)} style={sStyle}>
+            <select value={county} onChange={e=>handleCountyChange(e.target.value)} style={sStyle}>
               <option value="">Select County</option>
-              {KENYA_COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}
+              {COUNTY_NAMES.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+
+          {/* Constituency */}
           <div>
             <label className="block text-xs text-white/45 mb-1.5">Constituency</label>
-            <select value={constituency} onChange={e=>setConstituency(e.target.value)}
-              disabled={constituencies.length===0}
-              style={{ ...sStyle, opacity:constituencies.length===0?0.4:1 }}>
+            <select
+              value={constituency}
+              onChange={e=>handleConstituencyChange(e.target.value)}
+              disabled={!county || constituencies.length===0}
+              style={{ ...sStyle, opacity:(!county||constituencies.length===0)?0.4:1 }}>
               <option value="">Select Constituency</option>
               {constituencies.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+
+          {/* Ward */}
           <div>
             <label className="block text-xs text-white/45 mb-1.5">Ward</label>
-            <select value={ward} onChange={e=>setWard(e.target.value)}
-              disabled={wards.length===0}
-              style={{ ...sStyle, opacity:wards.length===0?0.4:1 }}>
+            <select
+              value={ward}
+              onChange={e=>setWard(e.target.value)}
+              disabled={!constituency || wards.length===0}
+              style={{ ...sStyle, opacity:(!constituency||wards.length===0)?0.4:1 }}>
               <option value="">Select Ward</option>
               {wards.map(w=><option key={w} value={w}>{w}</option>)}
             </select>
           </div>
         </div>
+
         {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+
         <button onClick={analyze} disabled={!county||loading}
           className="px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40"
           style={{ background:'rgba(34,197,94,0.8)', border:'1px solid rgba(34,197,94,0.5)' }}>
@@ -151,7 +146,7 @@ export default function ClimateAdvisor() {
                 <h2 className="text-xl font-black text-white">
                   {result.constituency ? `${result.constituency}, ` : ''}{result.county}
                 </h2>
-                <p className="text-sm text-green-400 font-semibold mt-0.5">{result.zone_name}</p>
+                <p className="text-sm text-green-400 font-semibold mt-0.5">{result.zone_name} — Zone {result.zone}</p>
                 <p className="text-sm text-white/55 mt-1">{result.description}</p>
               </div>
             </div>
@@ -231,7 +226,7 @@ export default function ClimateAdvisor() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-white/40 mb-3">Seed your database to see matched crops here.</p>
+              <p className="text-sm text-white/40 mb-3">Run seed.py on Render to populate crop data.</p>
             )}
             <div className="pt-3" style={{ borderTop:'1px solid rgba(255,255,255,0.08)' }}>
               <p className="text-xs text-white/40 mb-2">All crops suited to this zone:</p>
@@ -265,7 +260,7 @@ export default function ClimateAdvisor() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-white/40 mb-3">Seed your database to see matched livestock here.</p>
+              <p className="text-sm text-white/40 mb-3">Run seed.py on Render to populate livestock data.</p>
             )}
             <div className="pt-3" style={{ borderTop:'1px solid rgba(255,255,255,0.08)' }}>
               <p className="text-xs text-white/40 mb-2">All livestock suited to this zone:</p>
@@ -281,7 +276,7 @@ export default function ClimateAdvisor() {
         <G className="p-10 text-center">
           <div className="text-5xl mb-4">🌍</div>
           <h3 className="font-bold text-white mb-2">Select Your Location</h3>
-          <p className="text-sm text-white/40">Choose your county and click Analyze to get personalized crop and livestock recommendations</p>
+          <p className="text-sm text-white/40">Choose your county, then constituency, then click Analyze</p>
         </G>
       )}
     </div>
