@@ -113,7 +113,7 @@ KENYA_LOCATIONS = {
     "Kathiani": ["Mitaboni","Kathiani Central","Lower Kaewa/Kaani","Upper Kaewa"],
     "Mavoko": ["Athi River","Kinanie","Muthwani","Syokimau/Mulolongo"],
     "Machakos Town": ["Machakos Township","Mutituni","Mumbuni North","Muvuti","Kalama","Mua"],
-    "Mwala": ["Mbiuni","Makaveti/Nzaui","Kibauni","Nguluni","Kangundo East","Wamunyu"]
+    "Mwala": ["Mbiuni","Mwala/Makutano","Kibauni","Masii","Muthetheni","Wamunyu"]
   },
   "Makueni": {
     "Mbooni": ["Tulimani","Mbooni","Kithungo/Kitundu","Kisau/Kiteta","Waia/Kako"],
