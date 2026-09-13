@@ -19,10 +19,10 @@ FORMATTING RULES:
 - Separate topics with a blank line.
 
 When diagnosing a crop or animal problem:
-- Give a confident direct diagnosis. Do not ask for more details.
-- State clearly what disease or condition it is.
-- Describe the symptoms that match.
-- Give specific treatment using products available in Kenya: Dithane, Ridomil, Karate, Actara, Mancozeb, Copper Oxychloride, CAN, DAP, Butalex, Terramycin.
+- Give a confident direct diagnosis based on what the farmer describes.
+- State clearly what disease, pest or condition it is.
+- Describe the visible symptoms that match.
+- Give specific treatment using products available in Kenya: Dithane, Ridomil, Karate, Actara, Mancozeb, Copper Oxychloride, CAN, DAP, Butalex, Terramycin, Confidor, Duduthrin.
 - Give prevention advice.
 - Be concise and practical for smallholder Kenyan farmers.
 
@@ -90,32 +90,29 @@ async def chat(req: ChatReq, u: User = Depends(get_current_user)):
 
 @router.post("/analyze-image")
 async def analyze_image(req: ImageAnalysisReq, u: User = Depends(get_current_user)):
-    """
-    Always use Groq for image analysis since Gemini vision is not supported.
-    Groq gives a smart diagnosis based on common Kenya farming problems.
-    """
-    question = req.message or "What disease or problem could be affecting this crop or animal?"
+    question = req.message or ""
 
-    if GROQ_API_KEY:
-        prompt = (
-            f"A Kenyan farmer uploaded a photo of their crop or animal and asked: '{question}'\n\n"
-            "You are an expert agricultural diagnostician. Give a direct confident diagnosis.\n\n"
-            "State the 3 most likely diseases or conditions that cause visible symptoms on crops or animals in Kenya. "
-            "For each one:\n"
-            "1. Name the disease or condition clearly\n"
-            "2. Describe the exact symptoms a farmer would see (leaf color, spots, wilting, lesions, animal behavior)\n"
-            "3. Give treatment using specific Kenya product names and correct doses\n"
-            "4. Give one key prevention tip\n\n"
-            "Be specific, confident and practical. Write in plain paragraphs with no bullet points or dashes."
-        )
-        return await _groq_chat(prompt, [])
-
-    # Fallback: try Gemini vision anyway
+    # Try Gemini vision first — it can actually see the image
     if GEMINI_API_KEY:
         try:
             return await _gemini_vision(req.image, question)
-        except Exception as e:
-            raise HTTPException(500, f"Image analysis unavailable: {str(e)[:100]}")
+        except Exception:
+            pass
+
+    # Groq fallback — cannot see image, ask farmer to describe what they see
+    if GROQ_API_KEY:
+        prompt = (
+            f"A Kenyan farmer uploaded a photo of their crop or animal for diagnosis.\n"
+            f"The farmer says: '{question or 'Please diagnose this image.'}'\n\n"
+            "IMPORTANT: You cannot see the image. Ask the farmer to describe:\n"
+            "1. What crop or animal is in the photo?\n"
+            "2. What exactly do they see that looks wrong? (color, spots, lesions, insects, wilting, etc)\n"
+            "3. How long has this problem been visible?\n\n"
+            "Then based on their description you will give a precise diagnosis. "
+            "Tell them clearly that you need their description to give an accurate diagnosis, "
+            "and list the 3 questions above for them to answer."
+        )
+        return await _groq_chat(prompt, [])
 
     raise HTTPException(400, "No AI API key configured.")
 
@@ -128,7 +125,13 @@ async def _gemini_vision(image_data: str, message: str):
         b64_data = image_data
         mime_type = "image/jpeg"
 
-    prompt = f"{message} Give a direct diagnosis. State the disease, symptoms, treatment with Kenya products and prevention."
+    prompt = (
+        f"{message or 'Analyze this image carefully.'} "
+        "Look at exactly what is in the image — identify the crop or animal species first, "
+        "then identify the specific disease, pest or health problem you can see. "
+        "Give a direct diagnosis naming the exact condition, describe the symptoms visible, "
+        "give treatment with specific Kenya product names and doses, and give prevention advice."
+    )
 
     for model in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro-vision"]:
         try:
