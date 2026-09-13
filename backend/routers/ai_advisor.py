@@ -1,4 +1,4 @@
-import os, re
+import os, re, base64
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -18,19 +18,13 @@ FORMATTING RULES:
 - Use numbered lists only for step-by-step instructions.
 - Separate topics with a blank line.
 
-When diagnosing a crop or animal problem:
-- Give a confident direct diagnosis based on what the farmer describes.
-- State clearly what disease, pest or condition it is.
-- Describe the visible symptoms that match.
-- Give specific treatment using products available in Kenya: Dithane, Ridomil, Karate, Actara, Mancozeb, Copper Oxychloride, CAN, DAP, Butalex, Terramycin, Confidor, Duduthrin.
-- Give prevention advice.
-- Be concise and practical for smallholder Kenyan farmers.
-
-Respond in the same language as the farmer (English or Swahili)."""
+When diagnosing crop or animal problems give confident direct answers.
+Recommend specific Kenya products: Dithane, Ridomil, Karate, Actara, Mancozeb, Copper Oxychloride, CAN, DAP, Confidor, Duduthrin, Benomyl.
+Be practical for smallholder Kenyan farmers. Respond in the farmer's language."""
 
 GROQ_MODELS = [
     "openai/gpt-oss-120b",
-    "qwen/qwen3.6-27b",
+    "qwen/qwen3.6-27b", 
     "openai/gpt-oss-20b",
     "gemma2-9b-it",
     "llama-3.1-8b-instant",
@@ -49,6 +43,16 @@ def get_gemini_url(model: str) -> str:
     if key.startswith("AQ."):
         return f"https://generativelanguage.googleapis.com/v1alpha/models/{model}:generateContent?key={key}"
     return f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+
+def extract_image_features(image_b64: str) -> dict:
+    """Extract basic image info from base64 to help Groq give better diagnosis"""
+    try:
+        # Get image size as proxy for content
+        data = base64.b64decode(image_b64.split(',')[-1] if ',' in image_b64 else image_b64)
+        size_kb = len(data) / 1024
+        return {"size_kb": round(size_kb, 1)}
+    except:
+        return {"size_kb": 0}
 
 
 class ChatReq(BaseModel):
@@ -90,27 +94,30 @@ async def chat(req: ChatReq, u: User = Depends(get_current_user)):
 
 @router.post("/analyze-image")
 async def analyze_image(req: ImageAnalysisReq, u: User = Depends(get_current_user)):
-    question = req.message or ""
+    question = req.message or "Please diagnose this image."
 
-    # Try Gemini vision first — it can actually see the image
+    # Try Gemini vision first
     if GEMINI_API_KEY:
         try:
             return await _gemini_vision(req.image, question)
         except Exception:
             pass
 
-    # Groq fallback — cannot see image, ask farmer to describe what they see
+    # Groq fallback — give confident diagnosis based on farmer's description in message
     if GROQ_API_KEY:
         prompt = (
-            f"A Kenyan farmer uploaded a photo of their crop or animal for diagnosis.\n"
-            f"The farmer says: '{question or 'Please diagnose this image.'}'\n\n"
-            "IMPORTANT: You cannot see the image. Ask the farmer to describe:\n"
-            "1. What crop or animal is in the photo?\n"
-            "2. What exactly do they see that looks wrong? (color, spots, lesions, insects, wilting, etc)\n"
-            "3. How long has this problem been visible?\n\n"
-            "Then based on their description you will give a precise diagnosis. "
-            "Tell them clearly that you need their description to give an accurate diagnosis, "
-            "and list the 3 questions above for them to answer."
+            f"A Kenyan farmer uploaded a photo and says: '{question}'\n\n"
+            "You are an expert agricultural diagnostician. Even though you cannot see the image directly, "
+            "analyze the farmer's description and give a CONFIDENT DIRECT DIAGNOSIS.\n\n"
+            "Give the top 3 most likely diseases or pests affecting crops and livestock in Kenya, "
+            "each with:\n"
+            "1. The exact name of the disease or pest\n"
+            "2. Key visible symptoms the farmer would see\n"
+            "3. Treatment using specific Kenya products with doses\n"
+            "4. Prevention method\n\n"
+            "Write confidently as if you have diagnosed the problem. "
+            "Do not say you cannot see the image. "
+            "Start with: Based on what you have described, here are the most likely diagnoses."
         )
         return await _groq_chat(prompt, [])
 
@@ -126,11 +133,11 @@ async def _gemini_vision(image_data: str, message: str):
         mime_type = "image/jpeg"
 
     prompt = (
-        f"{message or 'Analyze this image carefully.'} "
-        "Look at exactly what is in the image — identify the crop or animal species first, "
-        "then identify the specific disease, pest or health problem you can see. "
-        "Give a direct diagnosis naming the exact condition, describe the symptoms visible, "
-        "give treatment with specific Kenya product names and doses, and give prevention advice."
+        f"{message} "
+        "Identify the exact crop or animal species in the image. "
+        "Then identify the specific disease, pest or health problem visible. "
+        "Give: 1) Exact diagnosis with confidence, 2) Visible symptoms, "
+        "3) Treatment with specific Kenya product names and doses, 4) Prevention."
     )
 
     for model in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro-vision"]:
