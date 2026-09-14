@@ -41,8 +41,8 @@ export default function AIAdvisor() {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [aiStatus, setAiStatus] = useState<any>(null)
-  const [provider, setProvider] = useState('gemini') // Always default to Gemini
+  const [provider, setProvider] = useState('gemini')
+  const [hasGroq, setHasGroq] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string|null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -51,10 +51,7 @@ export default function AIAdvisor() {
 
   useEffect(() => {
     api.get('/ai/status').then(r => {
-      setAiStatus(r.data)
-      // Always prefer Gemini for image diagnosis
-      if (r.data.gemini_configured) setProvider('gemini')
-      else if (r.data.groq_configured) setProvider('groq')
+      setHasGroq(r.data.groq_configured)
     }).catch(() => {})
   }, [])
 
@@ -87,11 +84,10 @@ export default function AIAdvisor() {
     try {
       let reply = ''
       if (capturedImage) {
-        // Always use Gemini for image diagnosis
         const r = await api.post('/ai/analyze-image', {
           image: capturedImage,
-          message: msg || 'Diagnose this image. Identify the crop or animal, then identify any disease, pest or health problem visible.',
-          provider: 'gemini' // Force Gemini for images
+          message: msg || 'Diagnose this image. Identify the crop or animal and any disease or pest visible.',
+          provider: 'gemini'
         })
         reply = r.data.reply
       } else {
@@ -100,48 +96,50 @@ export default function AIAdvisor() {
       }
       setMessages(prev => [...prev, { role:'assistant', content:reply }])
     } catch (err: any) {
-      const detail = err?.response?.data?.detail || 'Service unavailable. Check your API key.'
-      setMessages(prev => [...prev, { role:'assistant', content: detail }])
+      // Show actual error from backend
+      const status = err?.response?.status
+      const detail = err?.response?.data?.detail || err?.response?.data || err?.message || 'Unknown error'
+      let errMsg = ''
+      if (status === 401) {
+        errMsg = 'Session expired. Please sign out and sign in again.'
+      } else if (status === 500) {
+        errMsg = `AI error: ${detail}`
+      } else {
+        errMsg = `Error ${status}: ${detail}`
+      }
+      setMessages(prev => [...prev, { role:'assistant', content: errMsg }])
     }
     setLoading(false)
   }
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] slide-up">
-      {/* Header */}
       <div className="mb-3 flex-shrink-0 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-white">AI Farm Advisor</h1>
           <p className="text-white/35 text-xs mt-0.5">Kenya · English & Swahili · Powered by Gemini</p>
         </div>
-
-        {/* Engine switcher — for text chat only */}
-        {aiStatus && (aiStatus.gemini_configured || aiStatus.groq_configured) && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-white/35">Chat:</span>
-            {aiStatus.gemini_configured && (
-              <button onClick={() => setProvider('gemini')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all"
-                style={provider === 'gemini'
-                  ? { background:'rgba(59,130,246,0.7)', color:'white', border:'2px solid rgba(59,130,246,0.9)', boxShadow:'0 0 14px rgba(59,130,246,0.4)' }
-                  : { background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', border:'2px solid rgba(255,255,255,0.15)' }}>
-                🔵 Gemini {provider === 'gemini' && '✓'}
-              </button>
-            )}
-            {aiStatus.groq_configured && (
-              <button onClick={() => setProvider('groq')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all"
-                style={provider === 'groq'
-                  ? { background:'rgba(168,85,247,0.7)', color:'white', border:'2px solid rgba(168,85,247,0.9)', boxShadow:'0 0 14px rgba(168,85,247,0.4)' }
-                  : { background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', border:'2px solid rgba(255,255,255,0.15)' }}>
-                <Zap className="w-3 h-3"/> Groq {provider === 'groq' && '✓'}
-              </button>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/35">Chat:</span>
+          <button onClick={() => setProvider('gemini')}
+            className="px-3 py-1.5 rounded-xl font-bold text-xs transition-all"
+            style={provider === 'gemini'
+              ? { background:'rgba(59,130,246,0.7)', color:'white', border:'2px solid rgba(59,130,246,0.9)' }
+              : { background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', border:'2px solid rgba(255,255,255,0.15)' }}>
+            🔵 Gemini {provider === 'gemini' && '✓'}
+          </button>
+          {hasGroq && (
+            <button onClick={() => setProvider('groq')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all"
+              style={provider === 'groq'
+                ? { background:'rgba(168,85,247,0.7)', color:'white', border:'2px solid rgba(168,85,247,0.9)' }
+                : { background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', border:'2px solid rgba(255,255,255,0.15)' }}>
+              <Zap className="w-3 h-3"/> Groq {provider === 'groq' && '✓'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 py-2">
         {messages.map((m, i) => <MsgBubble key={i} msg={m}/>)}
         {loading && (
@@ -161,7 +159,6 @@ export default function AIAdvisor() {
         <div ref={bottomRef}/>
       </div>
 
-      {/* Image preview */}
       {selectedImage && (
         <div className="flex-shrink-0 mb-2 flex items-center gap-3 p-3 rounded-xl"
           style={{ background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.25)' }}>
@@ -175,16 +172,14 @@ export default function AIAdvisor() {
           </div>
           <div>
             <p className="text-sm text-green-300 font-medium">Photo ready — Gemini will diagnose it</p>
-            <p className="text-xs text-white/40">Add a message or press Send</p>
+            <p className="text-xs text-white/40">Press Send to analyze</p>
           </div>
         </div>
       )}
 
-      {/* Input */}
       <div className="flex-shrink-0 flex gap-2 p-2 rounded-2xl"
         style={{ background:'rgba(0,0,0,0.45)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,255,255,0.12)' }}>
         <button onClick={() => fileRef.current?.click()}
-          title="Upload photo for Gemini diagnosis"
           className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
           style={{ background:'rgba(34,197,94,0.2)', border:'1px solid rgba(34,197,94,0.3)' }}>
           <Camera className="w-4 h-4 text-green-400"/>
