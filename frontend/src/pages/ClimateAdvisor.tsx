@@ -1,57 +1,18 @@
 import { useState } from 'react'
-import api from '../lib/api'
 import { Link } from 'react-router-dom'
-import { MapPin, ChevronRight, AlertTriangle } from 'lucide-react'
+import api from '../lib/api'
 import { KENYA_LOCATIONS, COUNTY_NAMES } from '../lib/kenyaLocations'
-
-interface AnalysisResult {
-  county:string; constituency:string; zone:string; zone_name:string
-  altitude:number; rainfall:number; temperature:string
-  dry_months:string[]; soil_types:string[]; planting_months:string[]
-  best_crops:string[]; best_livestock:string[]; challenges:string[]
-  recommended_crops:any[]; recommended_livestock:any[]
-  description:string
-}
-
-const G = ({ children, className='' }: { children:React.ReactNode; className?:string }) => (
-  <div className={className} style={{ background:'rgba(0,0,0,0.38)', backdropFilter:'blur(18px)', border:'1px solid rgba(255,255,255,0.11)', borderRadius:'1rem' }}>{children}</div>
-)
-const Badge = ({ children, color='rgba(255,255,255,0.1)', text='rgba(255,255,255,0.7)' }: any) => (
-  <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background:color, color:text }}>{children}</span>
-)
-const CAT_EMOJI:Record<string,string> = { cereal:'🌾',legume:'🫘',vegetable:'🥬',fruit:'🍎','cash crop':'💰',flower:'🌸' }
-const ANIMAL_EMOJI:Record<string,string> = { cattle:'🐄',goat:'🐐',sheep:'🐑',poultry:'🐔',rabbit:'🐇',pig:'🐷',fish:'🐟',bees:'🐝',camel:'🐪',donkey:'🫏',duck:'🦆',quail:'🐦',ostrich:'🦜' }
 
 export default function ClimateAdvisor() {
   const [county, setCounty] = useState('')
   const [constituency, setConstituency] = useState('')
   const [ward, setWard] = useState('')
-  const [result, setResult] = useState<AnalysisResult|null>(null)
+  const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Get constituencies for selected county directly from local data
-  const constituencies = county && KENYA_LOCATIONS[county]
-    ? Object.keys(KENYA_LOCATIONS[county]).sort()
-    : []
-
-  // Get wards for selected constituency directly from local data
-  const wards = county && constituency && KENYA_LOCATIONS[county]?.[constituency]
-    ? [...KENYA_LOCATIONS[county][constituency]].sort()
-    : []
-
-  const handleCountyChange = (val: string) => {
-    setCounty(val)
-    setConstituency('')
-    setWard('')
-    setResult(null)
-    setError('')
-  }
-
-  const handleConstituencyChange = (val: string) => {
-    setConstituency(val)
-    setWard('')
-  }
+  const constituencies = county && KENYA_LOCATIONS[county] ? Object.keys(KENYA_LOCATIONS[county]).sort() : []
+  const wards = county && constituency && KENYA_LOCATIONS[county]?.[constituency] ? [...KENYA_LOCATIONS[county][constituency]].sort() : []
 
   const analyze = async () => {
     if (!county) { setError('Please select a county first'); return }
@@ -59,225 +20,117 @@ export default function ClimateAdvisor() {
     try {
       const r = await api.get('/climate/analyze', { params: { county, constituency } })
       setResult(r.data)
-    } catch (e:any) {
+    } catch (e: any) {
       setError(e?.response?.data?.detail || 'Analysis failed. Please try again.')
     }
     setLoading(false)
   }
 
-  const sStyle:React.CSSProperties = {
-    background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.18)',
-    color:'white', borderRadius:'0.75rem', padding:'0.6rem 0.85rem',
-    fontSize:'0.875rem', width:'100%', outline:'none', cursor:'pointer'
-  }
+  const place = result ? [ward, result.constituency, result.county].filter(Boolean).join(', ') : ''
 
   return (
-    <div className="slide-up max-w-5xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-black text-white drop-shadow-2xl">Climate & Location</h1>
-        <p className="text-white/45 mt-1 text-sm">Get crop and livestock recommendations for your exact location</p>
+    <div className="wrap">
+      <div className="page-head">
+        <h1>Climate and location</h1>
+        <p>Select your location to see the climate zone and the crops and livestock that suit it.</p>
       </div>
 
-      <G className="p-5 mb-5">
-        <div className="flex items-center gap-2 mb-4">
-          <MapPin className="w-4 h-4 text-blue-400"/>
-          <span className="font-bold text-white text-sm">Select Your Location</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-          {/* County */}
+      <div className="card card-pad" style={{ marginTop: 16 }}>
+        <div className="form-grid three">
           <div>
-            <label className="block text-xs text-white/45 mb-1.5">County *</label>
-            <select value={county} onChange={e=>handleCountyChange(e.target.value)} style={sStyle}>
-              <option value="">Select County</option>
-              {COUNTY_NAMES.map(c=><option key={c} value={c}>{c}</option>)}
+            <label className="label">County</label>
+            <select className="select" value={county} onChange={e => { setCounty(e.target.value); setConstituency(''); setWard(''); setResult(null) }}>
+              <option value="">Select county</option>
+              {COUNTY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-
-          {/* Constituency */}
           <div>
-            <label className="block text-xs text-white/45 mb-1.5">Constituency</label>
-            <select
-              value={constituency}
-              onChange={e=>handleConstituencyChange(e.target.value)}
-              disabled={!county || constituencies.length===0}
-              style={{ ...sStyle, opacity:(!county||constituencies.length===0)?0.4:1 }}>
-              <option value="">Select Constituency</option>
-              {constituencies.map(c=><option key={c} value={c}>{c}</option>)}
+            <label className="label">Constituency</label>
+            <select className="select" value={constituency} onChange={e => { setConstituency(e.target.value); setWard('') }} disabled={!county}>
+              <option value="">Select constituency</option>
+              {constituencies.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-
-          {/* Ward */}
           <div>
-            <label className="block text-xs text-white/45 mb-1.5">Ward</label>
-            <select
-              value={ward}
-              onChange={e=>setWard(e.target.value)}
-              disabled={!constituency || wards.length===0}
-              style={{ ...sStyle, opacity:(!constituency||wards.length===0)?0.4:1 }}>
-              <option value="">Select Ward</option>
-              {wards.map(w=><option key={w} value={w}>{w}</option>)}
+            <label className="label">Ward</label>
+            <select className="select" value={ward} onChange={e => setWard(e.target.value)} disabled={!constituency}>
+              <option value="">Select ward</option>
+              {wards.map(w => <option key={w} value={w}>{w}</option>)}
             </select>
           </div>
         </div>
+        {error && <div className="alert alert-error" style={{ marginTop: 14, marginBottom: 0 }}>{error}</div>}
+        <div style={{ marginTop: 16 }}>
+          <button className="btn btn-primary" onClick={analyze} disabled={!county || loading}>{loading ? 'Analyzing...' : 'Analyze location'}</button>
+        </div>
+      </div>
 
-        {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+      {!result && !loading && <div className="empty card" style={{ marginTop: 16 }}>Choose a county, then click Analyze location.</div>}
 
-        <button onClick={analyze} disabled={!county||loading}
-          className="px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40"
-          style={{ background:'rgba(34,197,94,0.8)', border:'1px solid rgba(34,197,94,0.5)' }}>
-          {loading ? 'Analyzing...' : 'Analyze Location'}
-        </button>
-      </G>
+      {result && (
+        <div className="fade" style={{ marginTop: 16, display: 'grid', gap: 16 }}>
+          <div className="card card-pad">
+            <h2 style={{ fontSize: 22, fontWeight: 800 }}>{place}</h2>
+            <p style={{ color: 'var(--g)', fontWeight: 600, marginTop: 4 }}>{result.zone_name} (zone {result.zone})</p>
+            <p className="prose" style={{ marginTop: 6 }}>{result.description}</p>
+            <div className="kv" style={{ marginTop: 16 }}>
+              <div><div className="k">Altitude</div><div className="v">{result.altitude} m</div></div>
+              <div><div className="k">Annual rainfall</div><div className="v">{result.rainfall} mm</div></div>
+              <div><div className="k">Temperature</div><div className="v">{result.temperature}</div></div>
+              <div><div className="k">Dry months</div><div className="v">{(result.dry_months || []).join(', ') || 'None'}</div></div>
+            </div>
+            <div className="block-title">Soil types</div>
+            <div className="badges">{(result.soil_types || []).map((s: string) => <span key={s} className="badge badge-amber">{s}</span>)}</div>
+            <div className="block-title">Best planting months</div>
+            <div className="badges">{(result.planting_months || []).map((m: string) => <span key={m} className="badge badge-green">{m}</span>)}</div>
+          </div>
 
-      {loading && (
-        <G className="p-8 text-center">
-          <p className="text-white/50 text-sm">Analyzing your location...</p>
-        </G>
-      )}
+          <div className="card card-pad">
+            <h3 style={{ fontSize: 18, marginBottom: 12 }}>Farming challenges in this area</h3>
+            {(result.challenges || []).map((c: string, i: number) => (
+              <div key={i} className="numbered"><b>{i + 1}.</b><span>{c}</span></div>
+            ))}
+          </div>
 
-      {result && !loading && (
-        <div className="space-y-4">
-          {/* Zone summary */}
-          <G className="p-5">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
-                style={{ background:'rgba(34,197,94,0.15)', border:'1px solid rgba(34,197,94,0.3)' }}>🌍</div>
-              <div className="flex-1">
-                <h2 className="text-xl font-black text-white">
-                  {result.constituency ? `${result.constituency}, ` : ''}{result.county}
-                </h2>
-                <p className="text-sm text-green-400 font-semibold mt-0.5">{result.zone_name} — Zone {result.zone}</p>
-                <p className="text-sm text-white/55 mt-1">{result.description}</p>
-              </div>
+          <div className="card card-pad">
+            <div className="section-head" style={{ marginBottom: 12 }}>
+              <h3 style={{ fontSize: 18 }}>Recommended crops</h3>
+              <Link to="/crops" className="link-green">Browse all &rarr;</Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-              {[
-                { label:'Altitude', val:`${result.altitude}m`, icon:'⛰️' },
-                { label:'Annual Rainfall', val:`${result.rainfall}mm`, icon:'🌧️' },
-                { label:'Temperature', val:result.temperature, icon:'🌡️' },
-                { label:'Dry Months', val:(result.dry_months||[]).join(', ')||'None', icon:'☀️' },
-              ].map(({ label, val, icon }) => (
-                <div key={label} className="p-3 rounded-xl" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)' }}>
-                  <div className="text-xs text-white/40 mb-1">{icon} {label}</div>
-                  <div className="text-sm font-bold text-white">{val}</div>
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-white/40 mb-2">Soil Types</p>
-                <div className="flex flex-wrap gap-1">
-                  {(result.soil_types||[]).map(s=><Badge key={s} color="rgba(251,191,36,0.2)" text="#fde68a">{s}</Badge>)}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-white/40 mb-2">Best Planting Months</p>
-                <div className="flex flex-wrap gap-1">
-                  {(result.planting_months||[]).map(m=><Badge key={m} color="rgba(34,197,94,0.2)" text="#4ade80">{m}</Badge>)}
-                </div>
-              </div>
-            </div>
-          </G>
-
-          {/* Challenges */}
-          <G className="p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <AlertTriangle className="w-4 h-4 text-red-400"/>
-              <h3 className="font-bold text-white">Farming Challenges in This Area</h3>
-            </div>
-            <div className="space-y-2">
-              {(result.challenges||[]).map((c,i)=>(
-                <div key={i} className="flex items-start gap-3 p-3 rounded-xl"
-                  style={{ background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.18)' }}>
-                  <span className="text-red-400 text-xs font-bold mt-0.5 flex-shrink-0">{i+1}.</span>
-                  <p className="text-sm text-white/75 leading-relaxed">{c}</p>
-                </div>
-              ))}
-            </div>
-          </G>
-
-          {/* Recommended Crops */}
-          <G className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white">
-                Recommended Crops
-                <span className="ml-2 text-xs text-white/40 font-normal">({(result.recommended_crops||[]).length} matched)</span>
-              </h3>
-              <Link to="/crops" className="text-xs text-green-400 font-semibold flex items-center gap-1">
-                Browse all <ChevronRight className="w-3 h-3"/>
-              </Link>
-            </div>
-            {(result.recommended_crops||[]).length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                {result.recommended_crops.map(crop=>(
-                  <Link key={crop.id} to="/crops"
-                    className="p-3 rounded-xl transition-all hover:scale-[1.02]"
-                    style={{ background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', textDecoration:'none' }}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-xl">{CAT_EMOJI[crop.category]||'🌿'}</span>
-                      <span className="font-semibold text-white text-sm">{crop.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge color="rgba(34,197,94,0.2)" text="#4ade80">{crop.category}</Badge>
-                      <span className="text-xs text-white/35">{crop.maturity_days} days</span>
-                    </div>
-                    {crop.market_price_ksh && <p className="text-xs text-amber-400 mt-1 font-medium">KSh {crop.market_price_ksh}</p>}
+            {(result.recommended_crops || []).length > 0 && (
+              <div className="grid-3" style={{ marginBottom: 14 }}>
+                {result.recommended_crops.map((c: any) => (
+                  <Link to="/crops" key={c.id} className="row-item card-hover" style={{ margin: 0 }}>
+                    <div className="t">{c.name}</div>
+                    <div className="d" style={{ textTransform: 'capitalize' }}>{c.category} - {c.maturity_days} days</div>
+                    {c.market_price_ksh && <div style={{ color: 'var(--g)', fontWeight: 700, fontSize: 13, marginTop: 4 }}>KSh {c.market_price_ksh}</div>}
                   </Link>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-white/40 mb-3">Run seed.py on Render to populate crop data.</p>
             )}
-            <div className="pt-3" style={{ borderTop:'1px solid rgba(255,255,255,0.08)' }}>
-              <p className="text-xs text-white/40 mb-2">All crops suited to this zone:</p>
-              <div className="flex flex-wrap gap-1">
-                {(result.best_crops||[]).map(c=><Badge key={c} color="rgba(34,197,94,0.12)" text="#86efac">{c}</Badge>)}
-              </div>
-            </div>
-          </G>
+            <div className="d" style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 6 }}>Suited to this zone</div>
+            <div className="badges">{(result.best_crops || []).map((c: string) => <span key={c} className="badge badge-green">{c}</span>)}</div>
+          </div>
 
-          {/* Recommended Livestock */}
-          <G className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white">
-                Recommended Livestock
-                <span className="ml-2 text-xs text-white/40 font-normal">({(result.recommended_livestock||[]).length} matched)</span>
-              </h3>
-              <Link to="/livestock" className="text-xs text-amber-400 font-semibold flex items-center gap-1">
-                Browse all <ChevronRight className="w-3 h-3"/>
-              </Link>
+          <div className="card card-pad">
+            <div className="section-head" style={{ marginBottom: 12 }}>
+              <h3 style={{ fontSize: 18 }}>Recommended livestock</h3>
+              <Link to="/livestock" className="link-green">Browse all &rarr;</Link>
             </div>
-            {(result.recommended_livestock||[]).length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
-                {result.recommended_livestock.map(animal=>(
-                  <Link key={animal.id} to="/livestock"
-                    className="p-3 rounded-xl transition-all hover:scale-[1.02]"
-                    style={{ background:'rgba(251,191,36,0.08)', border:'1px solid rgba(251,191,36,0.2)', textDecoration:'none' }}>
-                    <div className="text-2xl mb-1">{ANIMAL_EMOJI[animal.category]||'🐾'}</div>
-                    <div className="font-semibold text-white text-sm">{animal.name}</div>
-                    <Badge color="rgba(251,191,36,0.2)" text="#fbbf24">{animal.purpose}</Badge>
+            {(result.recommended_livestock || []).length > 0 && (
+              <div className="grid-3" style={{ marginBottom: 14 }}>
+                {result.recommended_livestock.map((a: any) => (
+                  <Link to="/livestock" key={a.id} className="row-item card-hover" style={{ margin: 0 }}>
+                    <div className="t">{a.name}</div>
+                    <div className="d" style={{ textTransform: 'capitalize' }}>{a.category} - {a.purpose}</div>
                   </Link>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-white/40 mb-3">Run seed.py on Render to populate livestock data.</p>
             )}
-            <div className="pt-3" style={{ borderTop:'1px solid rgba(255,255,255,0.08)' }}>
-              <p className="text-xs text-white/40 mb-2">All livestock suited to this zone:</p>
-              <div className="flex flex-wrap gap-1">
-                {(result.best_livestock||[]).map(a=><Badge key={a} color="rgba(251,191,36,0.12)" text="#fde68a">{a}</Badge>)}
-              </div>
-            </div>
-          </G>
+            <div className="d" style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 6 }}>Suited to this zone</div>
+            <div className="badges">{(result.best_livestock || []).map((a: string) => <span key={a} className="badge badge-amber">{a}</span>)}</div>
+          </div>
         </div>
-      )}
-
-      {!result && !loading && (
-        <G className="p-10 text-center">
-          <div className="text-5xl mb-4">🌍</div>
-          <h3 className="font-bold text-white mb-2">Select Your Location</h3>
-          <p className="text-sm text-white/40">Choose your county, then constituency, then click Analyze</p>
-        </G>
       )}
     </div>
   )

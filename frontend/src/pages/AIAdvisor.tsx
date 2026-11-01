@@ -1,205 +1,99 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import api from '../lib/api'
-import { Send, Leaf, Loader2, Zap, Camera, X, User } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 
-interface Message { role:'user'|'assistant'; content:string; image?:string }
-
-function MsgBubble({ msg }: { msg:Message }) {
-  const isUser = msg.role === 'user'
-  return (
-    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
-      <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
-        style={isUser ? { background:'rgba(251,191,36,0.8)' } : { background:'rgba(34,197,94,0.8)' }}>
-        {isUser ? <User className="w-4 h-4 text-white"/> : <Leaf className="w-4 h-4 text-white"/>}
-      </div>
-      <div className="max-w-2xl space-y-2">
-        {msg.image && (
-          <div className="rounded-2xl overflow-hidden" style={{ border:'1px solid rgba(255,255,255,0.2)', maxWidth:'240px' }}>
-            <img src={msg.image} alt="uploaded" className="w-full h-40 object-cover"/>
-          </div>
-        )}
-        {msg.content && (
-          <div className="text-sm leading-relaxed rounded-2xl px-4 py-3"
-            style={isUser
-              ? { background:'rgba(251,191,36,0.18)', border:'1px solid rgba(251,191,36,0.3)', color:'white', borderTopRightRadius:'4px', whiteSpace:'pre-wrap' }
-              : { background:'rgba(0,0,0,0.45)', border:'1px solid rgba(255,255,255,0.12)', backdropFilter:'blur(16px)', color:'rgba(255,255,255,0.88)', borderTopLeftRadius:'4px', whiteSpace:'pre-wrap' }}>
-            {msg.content}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+interface Message { role: 'user' | 'assistant'; content: string; image?: string }
 
 export default function AIAdvisor() {
   const { user } = useAuth()
-  const firstName = user?.name?.split(' ')[0] || 'Farmer'
+  const first = user?.name?.split(' ')[0] || 'Farmer'
+  const welcome = `Welcome, ${first}.\n\nAsk me anything about farming, or upload a photo of your crop or animal for a diagnosis.\n\nNinaweza pia kukusaidia kwa Kiswahili.`
 
-  const [messages, setMessages] = useState<Message[]>([
-    { role:'assistant', content:`Welcome, ${firstName}!\n\nAsk me anything about farming or upload a photo of your crop or animal for instant diagnosis.\n\nNinaweza pia kukusaidia kwa Kiswahili.` }
-  ])
+  const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: welcome }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [provider, setProvider] = useState('gemini')
   const [hasGroq, setHasGroq] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<string|null>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [image, setImage] = useState<string | null>(null)
+  const bottom = useRef<HTMLDivElement>(null)
+  const file = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages])
+  useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
+  useEffect(() => { api.get('/ai/status').then(r => setHasGroq(!!r.data.groq_configured)).catch(() => {}) }, [])
+  useEffect(() => { if (user?.name) setMessages([{ role: 'assistant', content: welcome }]) }, [user?.name])
 
-  useEffect(() => {
-    api.get('/ai/status').then(r => {
-      setHasGroq(r.data.groq_configured)
-    }).catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (user?.name) {
-      setMessages([{ role:'assistant', content:`Welcome, ${firstName}!\n\nAsk me anything about farming or upload a photo of your crop or animal for instant diagnosis.\n\nNinaweza pia kukusaidia kwa Kiswahili.` }])
-    }
-  }, [user?.name])
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return
-    const reader = new FileReader()
-    reader.onloadend = () => setSelectedImage(reader.result as string)
-    reader.readAsDataURL(file); e.target.value = ''
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return
+    const rd = new FileReader()
+    rd.onloadend = () => setImage(rd.result as string)
+    rd.readAsDataURL(f); e.target.value = ''
   }
 
-  const send = async (text?: string) => {
-    const msg = text || input.trim()
-    if ((!msg && !selectedImage) || loading) return
-    setInput('')
-    const capturedImage = selectedImage; setSelectedImage(null)
-    const userMsg: Message = {
-      role: 'user',
-      content: msg || 'Please diagnose this image.',
-      image: capturedImage || undefined
-    }
-    const history = messages.slice(1).map(m => ({ role:m.role, content:m.content }))
-    setMessages(prev => [...prev, userMsg])
-    setLoading(true)
+  const send = async () => {
+    const text = input.trim()
+    if ((!text && !image) || loading) return
+    const img = image
+    const history = messages.slice(1).map(m => ({ role: m.role, content: m.content }))
+    setMessages(m => [...m, { role: 'user', content: text || 'Please diagnose this image.', image: img || undefined }])
+    setInput(''); setImage(null); setLoading(true)
     try {
       let reply = ''
-      if (capturedImage) {
-        const r = await api.post('/ai/analyze-image', {
-          image: capturedImage,
-          message: msg || 'Diagnose this image. Identify the crop or animal and any disease or pest visible.',
-          provider: 'gemini'
-        })
+      if (img) {
+        const r = await api.post('/ai/analyze-image', { image: img, message: text || 'Diagnose this image. Identify the crop or animal and any disease or pest visible.', provider: 'gemini' })
         reply = r.data.reply
       } else {
-        const r = await api.post('/ai/chat', { message: msg, history, provider })
+        const r = await api.post('/ai/chat', { message: text, history, provider })
         reply = r.data.reply
       }
-      setMessages(prev => [...prev, { role:'assistant', content:reply }])
+      setMessages(m => [...m, { role: 'assistant', content: reply }])
     } catch (err: any) {
-      // Show actual error from backend
       const status = err?.response?.status
-      const detail = err?.response?.data?.detail || err?.response?.data || err?.message || 'Unknown error'
-      let errMsg = ''
-      if (status === 401) {
-        errMsg = 'Session expired. Please sign out and sign in again.'
-      } else if (status === 500) {
-        errMsg = `AI error: ${detail}`
-      } else {
-        errMsg = `Error ${status}: ${detail}`
-      }
-      setMessages(prev => [...prev, { role:'assistant', content: errMsg }])
+      const detail = err?.response?.data?.detail || err?.message || 'Unknown error'
+      setMessages(m => [...m, { role: 'assistant', content: status === 401 ? 'Session expired. Please sign out and sign in again.' : `AI error: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}` }])
     }
     setLoading(false)
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] slide-up">
-      <div className="mb-3 flex-shrink-0 flex items-center justify-between">
+    <div className="wrap">
+      <div className="page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 className="text-2xl font-black text-white">AI Farm Advisor</h1>
-          <p className="text-white/35 text-xs mt-0.5">Kenya · English & Swahili · Powered by Gemini</p>
+          <h1>AI farm advisor</h1>
+          <p>English and Swahili. Upload a photo for a diagnosis.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-white/35">Chat:</span>
-          <button onClick={() => setProvider('gemini')}
-            className="px-3 py-1.5 rounded-xl font-bold text-xs transition-all"
-            style={provider === 'gemini'
-              ? { background:'rgba(59,130,246,0.7)', color:'white', border:'2px solid rgba(59,130,246,0.9)' }
-              : { background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', border:'2px solid rgba(255,255,255,0.15)' }}>
-            🔵 Gemini {provider === 'gemini' && '✓'}
-          </button>
-          {hasGroq && (
-            <button onClick={() => setProvider('groq')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all"
-              style={provider === 'groq'
-                ? { background:'rgba(168,85,247,0.7)', color:'white', border:'2px solid rgba(168,85,247,0.9)' }
-                : { background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.5)', border:'2px solid rgba(255,255,255,0.15)' }}>
-              <Zap className="w-3 h-3"/> Groq {provider === 'groq' && '✓'}
-            </button>
-          )}
+        <div className="chips" style={{ padding: 0 }}>
+          <span style={{ alignSelf: 'center', fontSize: 13, color: 'var(--muted)' }}>Chat engine</span>
+          <button className={'chip' + (provider === 'gemini' ? ' active' : '')} onClick={() => setProvider('gemini')}>Gemini</button>
+          {hasGroq && <button className={'chip' + (provider === 'groq' ? ' active' : '')} onClick={() => setProvider('groq')}>Groq</button>}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4 py-2">
-        {messages.map((m, i) => <MsgBubble key={i} msg={m}/>)}
-        {loading && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background:'rgba(34,197,94,0.8)' }}>
-              <Leaf className="w-4 h-4 text-white"/>
+      <div className="card chat" style={{ marginTop: 16 }}>
+        <div className="chat-log">
+          {messages.map((m, i) => (
+            <div key={i} className={'msg ' + (m.role === 'user' ? 'msg-user' : 'msg-bot')}>
+              {m.image && <img src={m.image} alt="uploaded" />}
+              {m.content}
             </div>
-            <div className="px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-2"
-              style={{ background:'rgba(0,0,0,0.45)', border:'1px solid rgba(255,255,255,0.12)' }}>
-              <Loader2 className="w-4 h-4 text-green-400 animate-spin"/>
-              <span className="text-xs text-white/40">
-                {selectedImage ? 'Gemini analyzing photo...' : `Thinking via ${provider}...`}
-              </span>
-            </div>
+          ))}
+          {loading && <div className="msg msg-bot">{image ? 'Analyzing photo...' : `Thinking via ${provider}...`}</div>}
+          <div ref={bottom} />
+        </div>
+        {image && (
+          <div className="preview">
+            <img src={image} alt="preview" />
+            <span>Photo ready. Press Send to diagnose.</span>
+            <button className="btn btn-outline btn-sm" style={{ marginLeft: 'auto' }} onClick={() => setImage(null)}>Remove</button>
           </div>
         )}
-        <div ref={bottomRef}/>
-      </div>
-
-      {selectedImage && (
-        <div className="flex-shrink-0 mb-2 flex items-center gap-3 p-3 rounded-xl"
-          style={{ background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.25)' }}>
-          <div className="relative flex-shrink-0">
-            <img src={selectedImage} alt="preview" className="w-14 h-14 rounded-lg object-cover border border-white/20"/>
-            <button onClick={() => setSelectedImage(null)}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white"
-              style={{ background:'rgba(239,68,68,0.9)' }}>
-              <X className="w-3 h-3"/>
-            </button>
-          </div>
-          <div>
-            <p className="text-sm text-green-300 font-medium">Photo ready — Gemini will diagnose it</p>
-            <p className="text-xs text-white/40">Press Send to analyze</p>
-          </div>
+        <div className="chat-bar">
+          <button className="btn btn-outline" onClick={() => file.current?.click()}>Photo</button>
+          <input className="input" placeholder="Ask about crops, livestock or diseases" value={input} disabled={loading}
+            onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()} />
+          <button className="btn btn-primary" onClick={send} disabled={(!input.trim() && !image) || loading}>Send</button>
         </div>
-      )}
-
-      <div className="flex-shrink-0 flex gap-2 p-2 rounded-2xl"
-        style={{ background:'rgba(0,0,0,0.45)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,255,255,0.12)' }}>
-        <button onClick={() => fileRef.current?.click()}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
-          style={{ background:'rgba(34,197,94,0.2)', border:'1px solid rgba(34,197,94,0.3)' }}>
-          <Camera className="w-4 h-4 text-green-400"/>
-        </button>
-        <input value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-          placeholder="Ask about crops, livestock, diseases..."
-          disabled={loading}
-          className="flex-1 text-sm px-3 py-2 focus:outline-none text-white placeholder-white/30"
-          style={{ background:'transparent', border:'none' }}/>
-        <button onClick={() => send()}
-          disabled={(!input.trim() && !selectedImage) || loading}
-          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 disabled:opacity-30 flex-shrink-0"
-          style={{ background:'rgba(34,197,94,0.8)', border:'1px solid rgba(34,197,94,0.5)' }}>
-          <Send className="w-4 h-4 text-white"/>
-        </button>
+        <input ref={file} type="file" accept="image/*" style={{ display: 'none' }} onChange={pick} />
       </div>
-
-      <input ref={fileRef} type="file" accept="image/*" capture="environment"
-        className="hidden" onChange={handleImageSelect}/>
     </div>
   )
 }
