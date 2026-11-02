@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../lib/api'
 import { useAuth } from '../lib/auth'
+import PhotoHero from '../components/PhotoHero'
 
 interface Message { role: 'user' | 'assistant'; content: string; image?: string }
 
@@ -56,16 +57,12 @@ export default function AIAdvisor() {
 
   return (
     <div className="wrap">
-      <div className="page-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-        <div>
-          <h1>AI farm advisor</h1>
-          <p>English and Swahili. Upload a photo for a diagnosis.</p>
-        </div>
-        <div className="chips" style={{ padding: 0 }}>
-          <span style={{ alignSelf: 'center', fontSize: 13, color: 'var(--muted)' }}>Chat engine</span>
-          <button className={'chip' + (provider === 'gemini' ? ' active' : '')} onClick={() => setProvider('gemini')}>Gemini</button>
-          {hasGroq && <button className={'chip' + (provider === 'groq' ? ' active' : '')} onClick={() => setProvider('groq')}>Groq</button>}
-        </div>
+      <PhotoHero compact image="/images/ai.jpg" title="AI farm advisor" subtitle="English and Swahili. Upload a photo of a sick crop or animal for a diagnosis." />
+
+      <div className="chips" style={{ marginTop: 16 }}>
+        <span style={{ alignSelf: 'center', fontSize: 13, color: 'var(--muted)', paddingRight: 4 }}>Chat engine</span>
+        <button className={'chip' + (provider === 'gemini' ? ' active' : '')} onClick={() => setProvider('gemini')}>Gemini</button>
+        {hasGroq && <button className={'chip' + (provider === 'groq' ? ' active' : '')} onClick={() => setProvider('groq')}>Groq</button>}
       </div>
 
       <div className="card chat" style={{ marginTop: 16 }}>

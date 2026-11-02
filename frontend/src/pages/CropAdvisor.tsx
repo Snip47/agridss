@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../lib/api'
 import { useAuth } from '../lib/auth'
+import PhotoHero from '../components/PhotoHero'
 
 interface Variety { name: string; type: string; maturity_days?: number; notes: string }
 interface Crop { id: number; name: string; category: string; subcategory: string; varieties: Variety[]; suitable_aez: string[]; rainfall_min_mm: number; rainfall_max_mm: number; altitude_min_m: number; altitude_max_m: number; water_requirement: string; soil_types: string[]; planting_months: string[]; maturity_days: number; description: string; care_tips: string; expected_yield: string; market_price_ksh: string; diseases: string[]; best_counties: string[] }
@@ -28,10 +29,7 @@ export default function CropAdvisor() {
 
   return (
     <div className="wrap">
-      <div className="page-head">
-        <h1>Crop advisor</h1>
-        <p>{crops.length} crops with varieties, planting guides, soil needs and market prices.</p>
-      </div>
+      <PhotoHero compact image="/images/crops.jpg" title="Crop advisor" subtitle={`${crops.length} crops with varieties, planting guides, soil needs and market prices.`} />
       <div className="section" style={{ paddingTop: 12 }}>
         <input className="input search" placeholder="Search crops" value={q} onChange={e => setQ(e.target.value)} />
         <div className="chips" style={{ marginTop: 12 }}>

@@ -178,3 +178,25 @@ button { font-family: inherit; cursor: pointer; }
 .fade { animation: fade .25s ease; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 select option { color: #111827; background: #fff; }
+
+/* Photo hero and photo cards */
+.photo-hero { margin-top: 16px; border-radius: 28px; overflow: hidden; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #fff; padding: 48px 24px; background-size: cover; background-position: center; }
+.photo-hero.compact { min-height: 230px; padding: 36px 24px; }
+.photo-hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; max-width: 760px; text-shadow: 0 2px 12px rgba(0,0,0,.35); }
+.photo-hero.compact h1 { font-size: 34px; }
+.photo-hero p { margin-top: 14px; font-size: 17px; max-width: 620px; opacity: .95; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
+.photo-hero .btn { margin-top: 24px; border-radius: 999px; padding: 14px 28px; font-size: 16px; }
+.photo-card { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 240px; border-radius: 24px; overflow: hidden; padding: 26px; color: #fff; background-size: cover; background-position: center; transition: transform .2s; }
+.photo-card:hover { transform: translateY(-2px); }
+.photo-card h3 { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+.photo-card p { margin-top: 6px; font-size: 15px; opacity: .95; max-width: 460px; }
+.photo-card span { margin-top: 12px; font-weight: 700; font-size: 15px; color: #fde68a; }
+.float-chat { position: fixed; right: 18px; bottom: 90px; width: 56px; height: 56px; border-radius: 50%; background: var(--g); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 22px rgba(21,128,61,.4); z-index: 45; }
+.float-chat:hover { background: var(--g-dark); }
+@media (min-width: 861px) { .float-chat { bottom: 28px; right: 28px; } }
+@media (max-width: 860px) {
+  .photo-hero { min-height: 320px; border-radius: 24px; }
+  .photo-hero h1 { font-size: 32px; }
+  .photo-hero.compact { min-height: 200px; }
+  .photo-hero.compact h1 { font-size: 26px; }
+}

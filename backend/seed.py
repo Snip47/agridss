@@ -11,24 +11,24 @@ Base.metadata.create_all(bind=engine)
 def seed():
     db = SessionLocal()
     try:
-        print("🌱 Seeding AgriDSS Kenya database...")
+        print(" Seeding AgriDSS Kenya database...")
 
         # ── Users ──
         if not db.query(User).filter(User.email=="admin@agridss.co.ke").first():
             db.add(User(name="AgriDSS Admin",email="admin@agridss.co.ke",
                 hashed_password=hash_password("Admin@1234"),role="admin",
                 county="Nairobi",constituency="Westlands"))
-            print("  ✅ Admin created")
+            print("  Admin created")
 
         if not db.query(User).filter(User.email=="farmer@agridss.co.ke").first():
             db.add(User(name="Demo Farmer",email="farmer@agridss.co.ke",
                 hashed_password=hash_password("Farmer@1234"),role="farmer",
                 county="Murang'a",constituency="Murang'a South",ward="Township"))
-            print("  ✅ Farmer created")
+            print(" Farmer created")
         db.commit()
 
         # ── FORCE clear and reseed crops ──
-        print("  🔄 Clearing old crops...")
+        print("   Clearing old crops...")
         db.query(Crop).delete()
         db.commit()
 
@@ -56,10 +56,10 @@ def seed():
                 best_counties=json.dumps(c.get("best_counties",[]))
             ))
         db.commit()
-        print(f"  ✅ {db.query(Crop).count()} crops seeded")
+        print(f"  {db.query(Crop).count()} crops seeded")
 
         # ── FORCE clear and reseed livestock ──
-        print("  🔄 Clearing old livestock...")
+        print("  Clearing old livestock...")
         db.query(Animal).delete()
         db.commit()
 
@@ -82,10 +82,10 @@ def seed():
                 space_required=a.get("space_required","")
             ))
         db.commit()
-        print(f"  ✅ {db.query(Animal).count()} livestock seeded")
+        print(f"  {db.query(Animal).count()} livestock seeded")
 
         # ── FORCE clear and reseed diseases ──
-        print("  🔄 Clearing old diseases...")
+        print("  Clearing old diseases...")
         db.query(Disease).delete()
         db.commit()
 
@@ -102,18 +102,18 @@ def seed():
                 severity=d.get("severity","medium")
             ))
         db.commit()
-        print(f"  ✅ {db.query(Disease).count()} diseases seeded")
+        print(f"  {db.query(Disease).count()} diseases seeded")
 
         print(f"\n🎉 Database seeded successfully!")
         print(f"   Crops: {db.query(Crop).count()}")
         print(f"   Livestock: {db.query(Animal).count()}")
         print(f"   Diseases: {db.query(Disease).count()}")
         print(f"   Users: {db.query(User).count()}")
-        print(f"\n🔐 Admin: admin@agridss.co.ke / Admin@1234")
-        print(f"👨‍🌾 Farmer: farmer@agridss.co.ke / Farmer@1234")
+        print(f"\n Admin: admin@agridss.co.ke / Admin@1234")
+        print(f" Farmer: farmer@agridss.co.ke / Farmer@1234")
 
     except Exception as e:
-        print(f"❌ Seed error: {e}")
+        print(f"Seed error: {e}")
         import traceback; traceback.print_exc()
         db.rollback()
     finally:

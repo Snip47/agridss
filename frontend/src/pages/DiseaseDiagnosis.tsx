@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
 import { useAuth } from '../lib/auth'
+import PhotoHero from '../components/PhotoHero'
 
 interface Disease { id: number; name: string; type: string; affects: string; symptoms: string; causes: string; treatment: string; prevention: string; severity: string }
 const sev: Record<string, string> = { low: 'badge-green', medium: 'badge-amber', high: 'badge-red', critical: 'badge-red' }
@@ -28,10 +29,7 @@ export default function DiseaseDiagnosis() {
 
   return (
     <div className="wrap">
-      <div className="page-head">
-        <h1>Disease diagnosis</h1>
-        <p>{list.length} crop and livestock diseases with symptoms, treatment and prevention.</p>
-      </div>
+      <PhotoHero compact image="/images/diseases.jpg" title="Disease diagnosis" subtitle={`${list.length} crop and livestock diseases with symptoms, treatment and prevention.`} />
       <div className="section" style={{ paddingTop: 12 }}>
         <div className="notice" style={{ marginBottom: 14 }}>Have a photo of the problem? <Link to="/ai" className="link-green">Open the AI farm advisor</Link> for an instant diagnosis.</div>
         <input className="input search" placeholder="Search by disease, crop, animal or symptom" value={q} onChange={e => setQ(e.target.value)} />

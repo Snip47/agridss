@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
 import { KENYA_LOCATIONS, COUNTY_NAMES } from '../lib/kenyaLocations'
+import PhotoHero from '../components/PhotoHero'
 
 export default function ClimateAdvisor() {
   const [county, setCounty] = useState('')
@@ -30,10 +31,7 @@ export default function ClimateAdvisor() {
 
   return (
     <div className="wrap">
-      <div className="page-head">
-        <h1>Climate and location</h1>
-        <p>Select your location to see the climate zone and the crops and livestock that suit it.</p>
-      </div>
+      <PhotoHero compact image="/images/climate.jpg" title="Climate and location" subtitle="Select your location to see the climate zone and the crops and livestock that suit it." />
 
       <div className="card card-pad" style={{ marginTop: 16 }}>
         <div className="form-grid three">

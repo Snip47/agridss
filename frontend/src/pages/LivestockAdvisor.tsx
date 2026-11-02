@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../lib/api'
 import { useAuth } from '../lib/auth'
+import PhotoHero from '../components/PhotoHero'
 
 interface Breed { name: string; origin: string; milk_production?: string; weight_kg?: string; eggs_year?: string; honey_kg_yr?: string; notes: string }
 interface Animal { id: number; name: string; category: string; purpose: string; breeds: Breed[]; description: string; feeding_guide: string; housing_requirements: string; vaccination_schedule: { vaccine: string; timing: string; dose: string }[]; common_diseases: string[]; breeding_info: string; market_info: string; water_requirement: string; space_required: string }
@@ -32,10 +33,7 @@ export default function LivestockAdvisor() {
 
   return (
     <div className="wrap">
-      <div className="page-head">
-        <h1>Livestock advisor</h1>
-        <p>{list.length} livestock types with breeds, feeding, housing and market information.</p>
-      </div>
+      <PhotoHero compact image="/images/livestock.jpg" title="Livestock advisor" subtitle={`${list.length} livestock types with breeds, feeding, housing and market information.`} />
       <div className="section" style={{ paddingTop: 12 }}>
         <input className="input search" placeholder="Search livestock" value={q} onChange={e => setQ(e.target.value)} />
         <div className="chips" style={{ marginTop: 12 }}>

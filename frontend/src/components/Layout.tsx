@@ -1,6 +1,6 @@
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { LayoutDashboard, CloudSun, Sprout, Beef, Bug, Bot } from 'lucide-react'
+import { LayoutDashboard, CloudSun, Sprout, Beef, Bug, Bot, MessageSquare } from 'lucide-react'
 
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -14,6 +14,7 @@ const links = [
 export default function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const signOut = () => { logout(); navigate('/login') }
 
   return (
@@ -44,6 +45,8 @@ export default function Layout() {
           <div>Murang'a University of Technology</div>
         </div>
       </footer>
+
+      {pathname !== '/ai' && <Link to="/ai" className="float-chat" aria-label="AI farm advisor"><MessageSquare size={24} /></Link>}
 
       <nav className="bottom-nav">
         {links.map(l => {
