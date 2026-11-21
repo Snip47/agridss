@@ -42,7 +42,6 @@ export default function Layout() {
       <footer className="footer">
         <div className="wrap footer-inner">
           <div><b>AgriDSS Kenya</b><br />Agricultural decision support for Kenyan smallholder farmers.</div>
-          <div>Murang'a University of Technology</div>
         </div>
       </footer>
 

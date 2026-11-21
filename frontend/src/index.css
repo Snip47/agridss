@@ -200,3 +200,6 @@ select option { color: #111827; background: #fff; }
   .photo-hero.compact { min-height: 200px; }
   .photo-hero.compact h1 { font-size: 26px; }
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }

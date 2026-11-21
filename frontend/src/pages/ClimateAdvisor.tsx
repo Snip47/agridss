@@ -1,25 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
-import { KENYA_LOCATIONS, COUNTY_NAMES } from '../lib/kenyaLocations'
+import { useAuth } from '../lib/auth'
+import LocationDetector from '../components/LocationDetector'
+import type { DetectedLocation } from '../lib/useAutoLocation'
 import PhotoHero from '../components/PhotoHero'
 
 export default function ClimateAdvisor() {
-  const [county, setCounty] = useState('')
-  const [constituency, setConstituency] = useState('')
-  const [ward, setWard] = useState('')
+  const { user, updateProfile } = useAuth()
+  const saved: DetectedLocation | null = user?.county
+    ? { county: user.county, constituency: user.constituency || '', ward: user.ward || '' }
+    : null
+
+  const [loc, setLoc] = useState<DetectedLocation | null>(saved)
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const constituencies = county && KENYA_LOCATIONS[county] ? Object.keys(KENYA_LOCATIONS[county]).sort() : []
-  const wards = county && constituency && KENYA_LOCATIONS[county]?.[constituency] ? [...KENYA_LOCATIONS[county][constituency]].sort() : []
-
-  const analyze = async () => {
-    if (!county) { setError('Please select a county first'); return }
+  const analyze = async (l: DetectedLocation) => {
     setError(''); setLoading(true); setResult(null)
     try {
-      const r = await api.get('/climate/analyze', { params: { county, constituency } })
+      const r = await api.get('/climate/analyze', { params: { county: l.county, constituency: l.constituency } })
       setResult(r.data)
     } catch (e: any) {
       setError(e?.response?.data?.detail || 'Analysis failed. Please try again.')
@@ -27,43 +28,31 @@ export default function ClimateAdvisor() {
     setLoading(false)
   }
 
-  const place = result ? [ward, result.constituency, result.county].filter(Boolean).join(', ') : ''
+  // Use the location saved on the profile straight away.
+  useEffect(() => { if (saved) analyze(saved) }, [])
+
+  // A fresh GPS detection: analyse it and keep the profile up to date.
+  const onDetected = (l: DetectedLocation) => {
+    setLoc(l)
+    analyze(l)
+    if (!saved || saved.county !== l.county || saved.constituency !== l.constituency || saved.ward !== l.ward) {
+      updateProfile({ county: l.county, constituency: l.constituency, ward: l.ward }).catch(() => {})
+    }
+  }
+
+  const place = result ? [loc?.ward, result.constituency || loc?.constituency, result.county].filter(Boolean).join(', ') : ''
 
   return (
     <div className="wrap">
-      <PhotoHero compact image="/images/climate.jpg" title="Climate and location" subtitle="Select your location to see the climate zone and the crops and livestock that suit it." />
+      <PhotoHero compact image="/images/climate.jpg" title="Climate and location" subtitle="Switch on your location to see the climate zone and the crops and livestock that suit your farm." />
 
       <div className="card card-pad" style={{ marginTop: 16 }}>
-        <div className="form-grid three">
-          <div>
-            <label className="label">County</label>
-            <select className="select" value={county} onChange={e => { setCounty(e.target.value); setConstituency(''); setWard(''); setResult(null) }}>
-              <option value="">Select county</option>
-              {COUNTY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Constituency</label>
-            <select className="select" value={constituency} onChange={e => { setConstituency(e.target.value); setWard('') }} disabled={!county}>
-              <option value="">Select constituency</option>
-              {constituencies.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Ward</label>
-            <select className="select" value={ward} onChange={e => setWard(e.target.value)} disabled={!constituency}>
-              <option value="">Select ward</option>
-              {wards.map(w => <option key={w} value={w}>{w}</option>)}
-            </select>
-          </div>
-        </div>
+        <LocationDetector value={loc} onDetected={onDetected} />
         {error && <div className="alert alert-error" style={{ marginTop: 14, marginBottom: 0 }}>{error}</div>}
-        <div style={{ marginTop: 16 }}>
-          <button className="btn btn-primary" onClick={analyze} disabled={!county || loading}>{loading ? 'Analyzing...' : 'Analyze location'}</button>
-        </div>
       </div>
 
-      {!result && !loading && <div className="empty card" style={{ marginTop: 16 }}>Choose a county, then click Analyze location.</div>}
+      {loading && <div className="empty card" style={{ marginTop: 16 }}>Analyzing your location...</div>}
+      {!result && !loading && !error && <div className="empty card" style={{ marginTop: 16 }}>Tap Detect my location to see the climate, crops and livestock for your farm.</div>}
 
       {result && (
         <div className="fade" style={{ marginTop: 16, display: 'grid', gap: 16 }}>

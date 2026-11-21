@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://agridss-backend.onrender.com'
+  baseURL: (import.meta as any).env?.VITE_API_URL || 'https://agridss-backend.onrender.com'
 })
 
 api.interceptors.request.use(cfg => {

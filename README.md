@@ -66,3 +66,11 @@ VITE_API_URL=https://agridss-backend.onrender.com/api
 - Crops: cereals, legumes, vegetables, fruits, cash crops, flowers
 - Livestock: cattle, goats, sheep, poultry, rabbits, pigs, fish, bees, camels, donkeys, ducks, quail, ostriches
 - Diseases: all major Kenya crop and livestock diseases with treatment guides
+
+## Automatic location (county, constituency, ward)
+
+Farmers no longer pick their location from dropdowns. They switch on location, tap **Detect my location**, and the app fills in county, constituency and ward.
+
+- **Frontend:** `components/LocationDetector.tsx` + `lib/useAutoLocation.ts` read the device GPS (`navigator.geolocation`, needs HTTPS) and call the API. Used on Register and on the Climate page (which also saves the result to the profile).
+- **Backend:** `POST /location/resolve {lat, lng}` -> `{county, constituency, ward, approximate}` (`services/geo.py`, pure-Python point-in-polygon, no extra dependencies). Coordinates are not stored; only the three names are.
+- **Data:** `backend/data/kenya_wards.json.gz` holds simplified IEBC ward boundaries (1,439 wards), built from [tigawanna/kenya_wards_geojson_data](https://github.com/tigawanna/kenya_wards_geojson_data) (MIT) with `backend/scripts/build_wards.py`.
