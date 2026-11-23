@@ -24,9 +24,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (token) {
-      api.get('/auth/me').then(r => setUser(r.data)).catch(() => localStorage.removeItem('token')).finally(() => setLoading(false))
-    } else setLoading(false)
+    if (!token) { setLoading(false); return }
+    let cancelled = false
+    const restore = async () => {
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          const r = await api.get('/auth/me')
+          if (!cancelled) setUser(r.data)
+          break
+        } catch (e: any) {
+          // Only an invalid or expired token signs the user out.
+          if (e?.response?.status === 401) { localStorage.removeItem('token'); break }
+          // The server may be waking up (free hosting) or the network may have dropped: wait and retry.
+          await new Promise(res => setTimeout(res, 3000))
+        }
+      }
+      if (!cancelled) setLoading(false)
+    }
+    restore()
+    return () => { cancelled = true }
   }, [])
 
   const login = async (email: string, password: string) => {
