@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom'
 import api from '../lib/api'
 import { useAuth } from '../lib/auth'
 
-interface U { id: number; name: string; email: string; role: string; county?: string; constituency?: string; created_at: string }
+interface U { id: number; name: string; email: string; role: string; county?: string; constituency?: string; ward?: string; created_at: string }
 
 export default function AdminPanel() {
   const { user } = useAuth()
@@ -51,7 +51,7 @@ export default function AdminPanel() {
       <div className="page-head"><h1>Admin</h1><p>Manage users and the knowledge base.</p></div>
 
       {stats && (
-        <div className="grid-4" style={{ margin: '16px 0' }}>
+        <div className="grid-4 stats" style={{ margin: '16px 0' }}>
           {[['Crops', stats.crops], ['Livestock', stats.animals], ['Diseases', stats.diseases], ['Users', stats.users]].map(([l, n]) => (
             <div key={l as string} className="card stat"><div className="n">{n}</div><div className="l">{l}</div></div>
           ))}
@@ -65,16 +65,16 @@ export default function AdminPanel() {
 
       {tab === 'users' && (
         <div className="card scroll-x">
-          <table className="table">
+          <table className="table stack">
             <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Location</th><th></th></tr></thead>
             <tbody>
               {users.map(u => (
                 <tr key={u.id}>
-                  <td style={{ fontWeight: 600 }}>{u.name}</td>
-                  <td>{u.email}</td>
-                  <td><span className={'badge ' + (u.role === 'admin' ? 'badge-blue' : 'badge-green')}>{u.role}</span></td>
-                  <td>{[u.county, u.constituency].filter(Boolean).join(', ') || '-'}</td>
-                  <td style={{ textAlign: 'right' }}>{u.role === 'admin' ? <span style={{ color: 'var(--muted)', fontSize: 13 }}>Protected</span> : <button className="btn btn-danger btn-sm" onClick={() => setConfirm(u)}>Delete</button>}</td>
+                  <td data-label="Name" style={{ fontWeight: 600 }}>{u.name}</td>
+                  <td data-label="Email" style={{ wordBreak: 'break-all' }}>{u.email}</td>
+                  <td data-label="Role"><span className={'badge ' + (u.role === 'admin' ? 'badge-blue' : 'badge-green')}>{u.role}</span></td>
+                  <td data-label="Location">{[u.ward, u.constituency, u.county].filter(Boolean).join(', ') || '-'}</td>
+                  <td className="actions" style={{ textAlign: 'right' }}>{u.role === 'admin' ? <span style={{ color: 'var(--muted)', fontSize: 13 }}>Protected</span> : <button className="btn btn-danger btn-sm" onClick={() => setConfirm(u)}>Delete</button>}</td>
                 </tr>
               ))}
               {users.length === 0 && <tr><td colSpan={5} className="empty">No users found.</td></tr>}

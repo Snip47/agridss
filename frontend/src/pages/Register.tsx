@@ -19,7 +19,9 @@ export default function Register() {
   }
 
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setLoading(true)
+    e.preventDefault(); setError('')
+    if (!loc) { setError('Please detect your location before creating an account.'); return }
+    setLoading(true)
     try {
       await register({ ...form, county: loc?.county, constituency: loc?.constituency, ward: loc?.ward })
       navigate('/')
@@ -54,13 +56,14 @@ export default function Register() {
               </div>
             </div>
           </div>
-          <div className="block-title" style={{ margin: '6px 0 0' }}>Your farm location</div>
+          <div className="block-title" style={{ margin: '6px 0 0' }}>Your farm location (required)</div>
           <LocationDetector value={loc} onDetected={setLoc} autoIfGranted />
           <div>
             <label className="label">Farm size (acres)</label>
             <input className="input" type="number" min="0" step="0.5" value={form.farm_size_acres} onChange={set('farm_size_acres')} />
           </div>
-          <button className="btn btn-primary btn-block" disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</button>
+          <button className="btn btn-primary btn-block" disabled={loading || !loc}>{loading ? 'Creating account...' : 'Create account'}</button>
+          {!loc && <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginTop: -4 }}>Detect your location above to continue.</p>}
         </form>
         <p className="auth-foot">Already registered? <Link to="/login" className="link-green">Sign in</Link></p>
       </div>

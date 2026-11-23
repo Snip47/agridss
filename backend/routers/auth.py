@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 from models.database import get_db, User
 from models.auth import hash_password, verify_password, create_token, get_current_user
+from data.kenya_locations import KENYA_LOCATIONS
 
 router = APIRouter()
 
@@ -75,6 +76,14 @@ def register(data: RegisterReq, db: Session = Depends(get_db)):
         raise HTTPException(400, "Password must be at least 6 characters")
     if db.query(User).filter(User.email == clean_email).first():
         raise HTTPException(400, "This email is already registered. Please sign in instead.")
+    # Location is mandatory: it must come from automatic detection (county, constituency and ward).
+    if not all(v and v.strip() for v in (data.county, data.constituency, data.ward)):
+        raise HTTPException(400, "Your location is required. Please switch on location and tap Detect my location.")
+    norm = lambda x: re.sub(r"[^a-z0-9]", "", x.lower())
+    county = next((k for k in KENYA_LOCATIONS if norm(k) == norm(data.county)), None)
+    if not county:
+        raise HTTPException(400, "We could not recognise your county. Please detect your location again.")
+    data.county = county
     user = User(
         name=data.name.strip(), email=clean_email,
         hashed_password=hash_password(data.password),

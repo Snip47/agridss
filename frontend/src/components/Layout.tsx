@@ -1,6 +1,7 @@
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
-import { LayoutDashboard, CloudSun, Sprout, Beef, Bug, Bot, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, CloudSun, Sprout, Beef, Bug, Bot, MessageSquare, ShieldCheck } from 'lucide-react'
+import LocationRequired from './LocationRequired'
 
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -16,6 +17,13 @@ export default function Layout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const signOut = () => { logout(); navigate('/login') }
+  const isAdmin = user?.role === 'admin'
+  // Farmers must have a detected location before they can use the app.
+  const needsLocation = !!user && !isAdmin && !user.county
+  const mobileLinks = [
+    ...links.map(l => ({ ...l, short: l.to === '/ai' ? 'AI' : l.label })),
+    ...(isAdmin ? [{ to: '/admin', label: 'Admin', short: 'Admin', icon: ShieldCheck, end: false }] : []),
+  ]
 
   return (
     <div>
@@ -37,7 +45,7 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="fade"><Outlet /></main>
+      <main className="fade">{needsLocation ? <LocationRequired /> : <Outlet />}</main>
 
       <footer className="footer">
         <div className="wrap footer-inner">
@@ -45,18 +53,20 @@ export default function Layout() {
         </div>
       </footer>
 
-      {pathname !== '/ai' && <Link to="/ai" className="float-chat" aria-label="AI farm advisor"><MessageSquare size={24} /></Link>}
+      {!needsLocation && pathname !== '/ai' && <Link to="/ai" className="float-chat" aria-label="AI farm advisor"><MessageSquare size={24} /></Link>}
 
-      <nav className="bottom-nav">
-        {links.map(l => {
-          const Icon = l.icon
-          return (
-            <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
-              <Icon size={20} />{l.label}
-            </NavLink>
-          )
-        })}
-      </nav>
+      {!needsLocation && (
+        <nav className={'bottom-nav' + (mobileLinks.length > 6 ? ' many' : '')}>
+          {mobileLinks.map(l => {
+            const Icon = l.icon
+            return (
+              <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+                <Icon size={20} />{l.short}
+              </NavLink>
+            )
+          })}
+        </nav>
+      )}
     </div>
   )
 }
