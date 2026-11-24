@@ -39,4 +39,5 @@ LIVESTOCK_DATA = [
 ]
 
 def get_all_livestock():
-    return LIVESTOCK_DATA
+    from data.livestock_extra import build_extra
+    return LIVESTOCK_DATA + build_extra(LIVESTOCK_DATA)

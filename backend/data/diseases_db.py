@@ -117,4 +117,5 @@ DISEASES_DATA = [
 ]
 
 def get_all_diseases():
-    return DISEASES_DATA
+    from data.diseases_extra import get_extra_diseases
+    return DISEASES_DATA + get_extra_diseases()

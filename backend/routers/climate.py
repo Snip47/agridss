@@ -173,6 +173,6 @@ def analyze(county: str, constituency: str = "", db: Session = Depends(get_db)):
         "best_livestock": ZONE_LIVESTOCK.get(zone, []),
         "challenges": ZONE_CHALLENGES.get(zone, ["Monitor crops regularly","Practice good farm hygiene"]),
         "recommended_crops": recommended_crops[:12],
-        "recommended_livestock": recommended_livestock[:8],
+        "recommended_livestock": recommended_livestock[:12],
         "description": f"Best for: {', '.join(ZONE_CROPS.get(zone,[])[:5])}.",
     }

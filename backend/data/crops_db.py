@@ -125,4 +125,6 @@ CROPS_DATA = [
 ]
 
 def get_all_crops():
-    return CROPS_DATA
+    from data.crops_extra import get_extra_crops
+    return CROPS_DATA + get_extra_crops()
+  
